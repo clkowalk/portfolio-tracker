@@ -566,8 +566,8 @@ function applyHide() {
     const el = document.getElementById(id);
     if (el) el.classList.toggle('blurred', valuesHidden);
   });
-  // Table: only shares and market value columns
-  document.querySelectorAll('.sens-shares, .sens-mktval').forEach(el => {
+  // Table: only shares, market value, and $ gain columns
+  document.querySelectorAll('.sens-shares, .sens-mktval, .sens-gain').forEach(el => {
     el.classList.toggle('blurred', valuesHidden);
   });
   // Groups page: value and stock count stats (not the % line)
@@ -781,7 +781,7 @@ function renderDashboard() {
       html += `<tr class="group-header-row">
         <td colspan="3"><span class="group-color-dot" style="background:${color}"></span>${name}</td>
         <td colspan="4" class="num sens-mktval" style="font-family:var(--mono);font-size:12px;text-align:right">${fmt(gValue)}</td>
-        <td class="num" style="font-family:var(--mono);font-size:12px">${gGain >= 0 ? '<span class="pill-green">+' : '<span class="pill-red">'}${fmt(gGain)}</span></td>
+        <td class="num sens-gain" style="font-family:var(--mono);font-size:12px">${gGain >= 0 ? '<span class="pill-green">+' : '<span class="pill-red">'}${fmt(gGain)}</span></td>
         <td class="num" style="font-family:var(--mono);font-size:12px">${gCost ? ((gGain/gCost*100) >= 0 ? '<span class="pill-green">+' : '<span class="pill-red">') + (gGain/gCost*100).toFixed(2) + '%</span>' : '—'}</td>
         <td class="num" style="font-family:var(--mono);font-size:12px">${gPct.toFixed(1)}%</td>
         <td></td>
@@ -822,7 +822,7 @@ function stockRow(h, totalValue, indent) {
     <td class="num">${fmt(h.cost)}</td>
     <td class="num">${priceDisplay}</td>
     <td class="num sens-mktval">${fmt(mktVal)}</td>
-    <td class="num">${gainHtml}</td>
+    <td class="num sens-gain">${gainHtml}</td>
     <td class="num">${gainPctHtml}</td>
     <td><div class="bar-wrap"><div class="bar-track"><div class="bar-fill" style="width:${Math.min(portfolioPct,100)}%"></div></div><span class="pct-text">${portfolioPct.toFixed(1)}%</span></div></td>
     <td style="white-space:nowrap">
