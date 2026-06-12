@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio Tracker</title>
+<style>
+  :root {
+    --bg: #f5f5f3;
+    --surface: #ffffff;
+    --surface2: #f0f0ee;
+    --border: #e2e2de;
+    --text: #1a1a18;
+    --muted: #6b6b66;
+    --accent: #2563eb;
+    --accent-light: #eff6ff;
+    --green: #16a34a;
+    --green-bg: #f0fdf4;
+    --red: #dc2626;
+    --red-bg: #fef2f2;
+    --radius: 10px;
+    --font: 'Inter', system-ui, -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; min-height: 100vh; }
+
+  /* HEADER */
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
+  .logo { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; display: inline-block; }
+  nav { display: flex; gap: 4px; }
+  nav button { background: none; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; font-family: var(--font); color: var(--muted); font-weight: 500; transition: all 0.15s; }
+  nav button.active { background: var(--accent-light); color: var(--accent); }
+  nav button:hover:not(.active) { background: var(--surface2); color: var(--text); }
+  .header-right { display: flex; gap: 8px; align-items: center; }
+  .api-key-btn { font-size: 12px; color: var(--muted); background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 12px; cursor: pointer; font-family: var(--font); transition: all 0.15s; }
+  .api-key-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* PAGES */
+  .page { display: none; padding: 32px; max-width: 1280px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  /* SUMMARY CARDS */
+  .summary-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; }
+  .card-label { font-size: 11px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .card-value { font-size: 22px; font-weight: 600; font-family: var(--mono); letter-spacing: -0.5px; color: var(--text); }
+  .card-value.green { color: var(--green); }
+  .card-value.red { color: var(--red); }
+  .card-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  /* VIEW TOGGLE */
+  .view-toggle { display: flex; gap: 0; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; padding: 3px; }
+  .view-toggle button { background: none; border: none; padding: 5px 14px; border-radius: 5px; font-size: 12px; font-weight: 500; font-family: var(--font); color: var(--muted); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+  .view-toggle button.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+  /* TABLE */
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .table-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--border); gap: 12px; flex-wrap: wrap; }
+  .toolbar-left { display: flex; align-items: center; gap: 12px; }
+  .table-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .toolbar-actions { display: flex; gap: 8px; align-items: center; }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 7px; font-size: 12px; font-weight: 500; font-family: var(--font); cursor: pointer; border: none; transition: all 0.15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #1d4ed8; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-ghost { background: none; color: var(--muted); border: 1px solid transparent; padding: 5px 10px; font-size: 12px; border-radius: 6px; cursor: pointer; font-family: var(--font); transition: all 0.15s; }
+  .btn-ghost:hover { border-color: var(--border); color: var(--text); }
+  .btn-danger { background: none; color: var(--red); border: none; padding: 4px 8px; font-size: 12px; cursor: pointer; border-radius: 4px; font-family: var(--font); opacity: 0.6; transition: opacity 0.15s; }
+  .btn-danger:hover { opacity: 1; background: var(--red-bg); }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); background: var(--surface2); border-bottom: 1px solid var(--border); }
+  thead th.num { text-align: right; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--bg); }
+  td { padding: 11px 16px; font-size: 13px; }
+  td.num { text-align: right; font-family: var(--mono); font-size: 12px; }
+
+  /* GROUP ROW */
+  .group-header-row td { background: var(--surface2); font-weight: 600; font-size: 12px; padding: 8px 16px; border-bottom: 1px solid var(--border); border-top: 2px solid var(--border); }
+  .group-header-row:first-child td { border-top: none; }
+  .group-color-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 7px; vertical-align: middle; flex-shrink: 0; }
+
+  .ticker-badge { display: inline-block; background: var(--accent-light); color: var(--accent); font-weight: 700; font-size: 12px; padding: 3px 8px; border-radius: 5px; letter-spacing: 0.3px; }
+  .group-badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.2px; }
+  .pill-green { display: inline-block; background: var(--green-bg); color: var(--green); font-weight: 600; font-size: 11px; padding: 2px 7px; border-radius: 4px; font-family: var(--mono); }
+  .pill-red { display: inline-block; background: var(--red-bg); color: var(--red); font-weight: 600; font-size: 11px; padding: 2px 7px; border-radius: 4px; font-family: var(--mono); }
+
+  .bar-wrap { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+  .bar-track { width: 60px; height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.4s ease; }
+  .pct-text { font-family: var(--mono); font-size: 12px; min-width: 38px; text-align: right; }
+
+  /* REFRESH */
+  .refresh-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; font-size: 12px; color: var(--muted); }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+  .status-dot.loading { background: #f59e0b; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* GROUPS PAGE */
+  .groups-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .group-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .group-card-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  .group-card-name { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
+  .group-card-actions { display: flex; gap: 4px; }
+  .group-card-stats { padding: 12px 16px; font-size: 12px; color: var(--muted); display: flex; gap: 16px; }
+  .group-card-stat strong { color: var(--text); font-family: var(--mono); }
+  .group-stocks-list { padding: 0 16px 14px; display: flex; flex-wrap: wrap; gap: 6px; }
+
+  /* MODALS */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 200; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border-radius: 14px; padding: 28px 32px; width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto; }
+  .modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 20px; }
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .form-group input, .form-group select { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 7px; font-size: 14px; font-family: var(--font); outline: none; transition: border 0.15s; background: var(--surface); color: var(--text); }
+  .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+  .modal-actions { display: flex; gap: 8px; margin-top: 24px; justify-content: flex-end; }
+
+  /* COLOR PICKER */
+  .color-picker { display: flex; gap: 8px; flex-wrap: wrap; }
+  .color-swatch { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: all 0.15s; }
+  .color-swatch.selected { border-color: var(--text); transform: scale(1.15); }
+
+  /* REBALANCER */
+  .rebal-layout { display: grid; grid-template-columns: 1fr 380px; gap: 24px; align-items: start; }
+  .section-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+  .total-pct { font-family: var(--mono); font-size: 12px; padding: 4px 10px; border-radius: 5px; font-weight: 600; }
+  .pct-ok { background: var(--green-bg); color: var(--green); }
+  .pct-warn { background: #fef9c3; color: #854d0e; }
+  .pct-err { background: var(--red-bg); color: var(--red); }
+  .rebal-input { width: 80px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-family: var(--mono); text-align: right; outline: none; transition: border 0.15s; }
+  .rebal-input:focus { border-color: var(--accent); }
+  .rebal-side { position: sticky; top: 80px; }
+  .results-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .results-header { padding: 16px 20px; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 600; }
+  .amount-input-row { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+  .amount-input-row label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); display: block; margin-bottom: 6px; }
+  .amount-input-row input { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 7px; font-size: 14px; font-family: var(--mono); outline: none; transition: border 0.15s; background: var(--surface); color: var(--text); }
+  .amount-input-row input:focus { border-color: var(--accent); }
+  .result-rows { padding: 8px 0; max-height: 480px; overflow-y: auto; }
+  .result-group-label { padding: 8px 20px 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .result-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 20px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .result-row:last-child { border-bottom: none; }
+  .result-ticker { font-weight: 700; font-size: 12px; color: var(--accent); min-width: 50px; }
+  .result-action { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 4px; }
+  .action-buy { background: var(--green-bg); color: var(--green); }
+  .action-sell { background: var(--red-bg); color: var(--red); }
+  .action-hold { background: var(--surface2); color: var(--muted); }
+  .result-shares { font-family: var(--mono); font-size: 12px; min-width: 80px; text-align: right; }
+
+  /* REBAL GROUP ROW */
+  .rebal-group-header { background: var(--surface2); }
+  .rebal-group-header td { padding: 9px 16px; font-size: 12px; font-weight: 600; border-bottom: 1px solid var(--border); }
+  .rebal-group-header td.num { font-family: var(--mono); }
+  .rebal-stock-row td { padding: 9px 16px 9px 28px; }
+
+  /* EMPTY STATE */
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty-state .big { font-size: 32px; margin-bottom: 12px; }
+  .empty-state p { font-size: 13px; line-height: 1.6; }
+
+  /* API BANNER */
+  .setup-banner { background: var(--accent-light); border: 1px solid #bfdbfe; border-radius: var(--radius); padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .setup-banner p { font-size: 13px; color: #1e40af; }
+
+  .blurred { filter: blur(6px); user-select: none; pointer-events: none; transition: filter 0.2s; }
+
+  @media (max-width: 960px) {
+    .rebal-layout { grid-template-columns: 1fr; }
+    .summary-row { grid-template-columns: repeat(2, 1fr); }
+    .rebal-side { position: static; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><span class="logo-dot"></span> Portfolio</div>
+  <nav>
+    <button class="active" onclick="showPage('dashboard', this)">Dashboard</button>
+    <button onclick="showPage('groups', this)">Groups</button>
+    <button onclick="showPage('rebalancer', this)">Rebalancer</button>
+  </nav>
+  <div class="header-right">
+    <button class="api-key-btn" id="hide-btn" onclick="toggleHide()" title="Hide values">👁 Hide Values</button>
+    <button class="api-key-btn" onclick="openApiModal()">⚙ API Key</button>
+  </div>
+</header>
+
+<!-- ═══════════════════ DASHBOARD ═══════════════════ -->
+<div class="page active" id="page-dashboard">
+  <div id="api-banner" class="setup-banner" style="display:none">
+    <p>⚠ <strong>No API key set.</strong> Add your free Finnhub key for live prices. <a href="https://finnhub.io" target="_blank" style="color:#1d4ed8">Get one at finnhub.io →</a></p>
+    <button class="btn btn-primary" onclick="openApiModal()">Set API Key</button>
+  </div>
+
+  <div class="summary-row">
+    <div class="card">
+      <div class="card-label">Portfolio Value</div>
+      <div class="card-value" id="total-value">—</div>
+      <div class="card-sub" id="total-cost-sub">—</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Total Gain / Loss</div>
+      <div class="card-value" id="total-gain">—</div>
+      <div class="card-sub" id="total-gain-pct">—</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Positions</div>
+      <div class="card-value" id="position-count">0</div>
+      <div class="card-sub" id="group-count-sub">—</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Last Updated</div>
+      <div class="card-value" id="last-updated" style="font-size:14px">—</div>
+      <div class="card-sub" id="market-note">—</div>
+    </div>
+  </div>
+
+  <div class="refresh-row">
+    <span class="status-dot" id="status-dot"></span>
+    <span id="status-text">Ready</span>
+    <button class="btn btn-secondary" style="padding:5px 12px;font-size:12px" onclick="refreshPrices()">↻ Refresh Prices</button>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-toolbar">
+      <div class="toolbar-left">
+        <span class="table-title">Holdings</span>
+        <div class="view-toggle">
+          <button class="active" id="view-btn-all" onclick="setView('all')">All Stocks</button>
+          <button id="view-btn-group" onclick="setView('group')">By Group</button>
+        </div>
+      </div>
+      <div class="toolbar-actions">
+        <button class="btn btn-secondary" onclick="exportCSV()">↓ Export CSV</button>
+        <button class="btn btn-primary" onclick="openAddModal()">+ Add Stock</button>
+      </div>
+    </div>
+    <div id="holdings-table-wrap"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════ GROUPS ═══════════════════ -->
+<div class="page" id="page-groups">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+    <div>
+      <h2 style="font-size:18px;font-weight:600;margin-bottom:4px;">Groups</h2>
+      <p style="font-size:13px;color:var(--muted);">Organise your stocks into strategy buckets. Assign each stock to a group when adding it.</p>
+    </div>
+    <button class="btn btn-primary" onclick="openGroupModal()">+ New Group</button>
+  </div>
+  <div class="groups-grid" id="groups-grid"></div>
+</div>
+
+<!-- ═══════════════════ REBALANCER ═══════════════════ -->
+<div class="page" id="page-rebalancer">
+  <div class="rebal-layout">
+    <div>
+      <div class="section-title">
+        Target Allocation — by Group
+        <span class="total-pct pct-warn" id="total-alloc-badge">0%</span>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">Set a target % for each group. Stocks within a group redistribute proportionally based on their current weights.</p>
+      <div class="table-wrap">
+        <div id="rebal-table-wrap"></div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;">
+        <button class="btn btn-primary" onclick="calculate()">Calculate trades →</button>
+      </div>
+    </div>
+    <div class="rebal-side">
+      <div class="results-card">
+        <div class="results-header">Suggested Trades</div>
+        <div class="amount-input-row">
+          <label>New cash to invest ($)</label>
+          <input type="number" id="new-cash" placeholder="0.00" value="0" oninput="calculate()">
+        </div>
+        <div class="result-rows" id="trade-results">
+          <div style="padding:24px 20px;text-align:center;color:var(--muted);font-size:13px;">Set target allocations and click "Calculate trades"</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODALS ═══════════════════ -->
+
+<!-- Add Stock -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <h3>Add Stock</h3>
+    <div class="form-group">
+      <label>Ticker Symbol</label>
+      <input type="text" id="input-ticker" placeholder="AAPL" style="text-transform:uppercase">
+    </div>
+    <div class="form-group">
+      <label>Number of Shares</label>
+      <input type="number" id="input-shares" placeholder="10" step="0.001">
+    </div>
+    <div class="form-group">
+      <label>Average Purchase Price ($)</label>
+      <input type="number" id="input-cost" placeholder="150.00" step="0.01">
+    </div>
+    <div class="form-group">
+      <label>Group</label>
+      <select id="input-group"></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('add-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addStock()">Add Stock</button>
+    </div>
+  </div>
+</div>
+
+<!-- New/Edit Group -->
+<div class="modal-overlay" id="group-modal">
+  <div class="modal">
+    <h3 id="group-modal-title">New Group</h3>
+    <div class="form-group">
+      <label>Group Name</label>
+      <input type="text" id="input-group-name" placeholder="e.g. Growth, Dividend, Tech">
+    </div>
+    <div class="form-group">
+      <label>Color</label>
+      <div class="color-picker" id="color-picker"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('group-modal')">Cancel</button>
+      <button class="btn btn-primary" id="group-modal-save" onclick="saveGroup()">Create Group</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Stock -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <h3>Edit Stock — <span id="edit-modal-ticker"></span></h3>
+    <div class="form-group">
+      <label>Number of Shares</label>
+      <input type="number" id="edit-shares" placeholder="10" step="0.001">
+    </div>
+    <div class="form-group">
+      <label>Average Purchase Price ($)</label>
+      <input type="number" id="edit-cost" placeholder="150.00" step="0.01">
+    </div>
+    <div class="form-group">
+      <label>Group</label>
+      <select id="edit-group"></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('edit-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditStock()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- API Key -->
+<div class="modal-overlay" id="api-modal">
+  <div class="modal">
+    <h3>Finnhub API Key</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6;">
+      Get a free key at <a href="https://finnhub.io" target="_blank" style="color:var(--accent)">finnhub.io</a> — sign up takes ~2 minutes.
+    </p>
+    <div class="form-group">
+      <label>API Key</label>
+      <input type="text" id="input-apikey" placeholder="your_key_here">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('api-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveApiKey()">Save & Refresh</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════
+let holdings = JSON.parse(localStorage.getItem('pt_holdings') || '[]');
+// { ticker, shares, cost, currentPrice, groupId }
+
+let groups = JSON.parse(localStorage.getItem('pt_groups') || '[]');
+// { id, name, color }
+
+let apiKey = localStorage.getItem('pt_apikey') || '';
+let dashView = 'all'; // 'all' | 'group'
+let editingGroupId = null;
+let groupTargets = {}; // { groupId: targetPct }
+
+const GROUP_COLORS = ['#2563eb','#16a34a','#dc2626','#d97706','#7c3aed','#0891b2','#be185d','#65a30d','#ea580c','#0f766e'];
+const UNGROUPED_ID = '__ungrouped__';
+
+function save() {
+  localStorage.setItem('pt_holdings', JSON.stringify(holdings));
+  localStorage.setItem('pt_groups', JSON.stringify(groups));
+}
+
+function totalPortfolioValue() {
+  return holdings.reduce((s, h) => s + (h.currentPrice || h.cost) * h.shares, 0);
+}
+
+function groupColor(groupId) {
+  if (groupId === UNGROUPED_ID) return '#9ca3af';
+  const g = groups.find(g => g.id === groupId);
+  return g ? g.color : '#9ca3af';
+}
+
+function groupName(groupId) {
+  if (!groupId || groupId === UNGROUPED_ID) return 'Ungrouped';
+  const g = groups.find(g => g.id === groupId);
+  return g ? g.name : 'Ungrouped';
+}
+
+// ═══════════════════════════════════════
+//  NAV
+// ═══════════════════════════════════════
+function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'groups') renderGroupsPage();
+  if (name === 'rebalancer') renderRebalancer();
+}
+
+// ═══════════════════════════════════════
+//  VIEW TOGGLE
+// ═══════════════════════════════════════
+function setView(v) {
+  dashView = v;
+  document.getElementById('view-btn-all').classList.toggle('active', v === 'all');
+  document.getElementById('view-btn-group').classList.toggle('active', v === 'group');
+  renderDashboard();
+}
+
+// ═══════════════════════════════════════
+//  MODALS
+// ═══════════════════════════════════════
+function openAddModal() {
+  ['input-ticker','input-shares','input-cost'].forEach(id => document.getElementById(id).value = '');
+  // Populate group select
+  const sel = document.getElementById('input-group');
+  sel.innerHTML = `<option value="${UNGROUPED_ID}">— No group —</option>` +
+    groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+  document.getElementById('add-modal').classList.add('open');
+  document.getElementById('input-ticker').focus();
+}
+
+function openEditModal(ticker) {
+  const h = holdings.find(x => x.ticker === ticker);
+  if (!h) return;
+  document.getElementById('edit-modal-ticker').textContent = ticker;
+  document.getElementById('edit-shares').value = h.shares;
+  document.getElementById('edit-cost').value = h.cost;
+  const sel = document.getElementById('edit-group');
+  sel.innerHTML = `<option value="${UNGROUPED_ID}">— No group —</option>` +
+    groups.map(g => `<option value="${g.id}"${g.id === h.groupId ? ' selected' : ''}>${g.name}</option>`).join('');
+  if (!h.groupId || h.groupId === UNGROUPED_ID) sel.value = UNGROUPED_ID;
+  document.getElementById('edit-modal').classList.add('open');
+  document.getElementById('edit-shares').focus();
+}
+
+function saveEditStock() {
+  const ticker = document.getElementById('edit-modal-ticker').textContent;
+  const h = holdings.find(x => x.ticker === ticker);
+  if (!h) return;
+  const shares = parseFloat(document.getElementById('edit-shares').value);
+  const cost   = parseFloat(document.getElementById('edit-cost').value);
+  const groupId = document.getElementById('edit-group').value || UNGROUPED_ID;
+  if (isNaN(shares) || isNaN(cost) || shares <= 0 || cost <= 0) {
+    alert('Please enter valid shares and cost values.');
+    return;
+  }
+  h.shares = shares;
+  h.cost = cost;
+  h.groupId = groupId;
+  save();
+  closeModal('edit-modal');
+  renderDashboard();
+}
+
+// ═══════════════════════════════════════
+//  HIDE VALUES
+// ═══════════════════════════════════════
+let valuesHidden = false;
+
+function toggleHide() {
+  valuesHidden = !valuesHidden;
+  document.getElementById('hide-btn').textContent = valuesHidden ? '👁 Show Values' : '👁 Hide Values';
+  applyHide();
+}
+
+function applyHide() {
+  // Summary cards — only total value and cost basis, not gain/loss %
+  ['total-value', 'total-cost-sub'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('blurred', valuesHidden);
+  });
+  // Table: only shares and market value columns
+  document.querySelectorAll('.sens-shares, .sens-mktval').forEach(el => {
+    el.classList.toggle('blurred', valuesHidden);
+  });
+  // Groups page: value and stock count stats (not the % line)
+  document.querySelectorAll('.group-card-stat').forEach(el => {
+    if (el.textContent.includes('value') || el.textContent.includes('stock')) {
+      el.classList.toggle('blurred', valuesHidden);
+    }
+  });
+}
+
+function openApiModal() {
+  document.getElementById('input-apikey').value = apiKey;
+  document.getElementById('api-modal').classList.add('open');
+}
+
+function openGroupModal(editId) {
+  editingGroupId = editId || null;
+  const g = editId ? groups.find(x => x.id === editId) : null;
+  document.getElementById('group-modal-title').textContent = g ? 'Edit Group' : 'New Group';
+  document.getElementById('group-modal-save').textContent = g ? 'Save Changes' : 'Create Group';
+  document.getElementById('input-group-name').value = g ? g.name : '';
+
+  // Build color swatches
+  const selectedColor = g ? g.color : GROUP_COLORS[groups.length % GROUP_COLORS.length];
+  document.getElementById('color-picker').innerHTML = GROUP_COLORS.map(c =>
+    `<div class="color-swatch ${c === selectedColor ? 'selected' : ''}" style="background:${c}" data-color="${c}" onclick="selectColor(this)"></div>`
+  ).join('');
+
+  document.getElementById('group-modal').classList.add('open');
+  document.getElementById('input-group-name').focus();
+}
+
+function selectColor(el) {
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ═══════════════════════════════════════
+//  API KEY
+// ═══════════════════════════════════════
+function saveApiKey() {
+  apiKey = document.getElementById('input-apikey').value.trim();
+  localStorage.setItem('pt_apikey', apiKey);
+  closeModal('api-modal');
+  checkApiBanner();
+  if (apiKey && holdings.length) refreshPrices();
+}
+
+function checkApiBanner() {
+  document.getElementById('api-banner').style.display = (!apiKey && holdings.length) ? 'flex' : 'none';
+}
+
+// ═══════════════════════════════════════
+//  GROUPS CRUD
+// ═══════════════════════════════════════
+function saveGroup() {
+  const name = document.getElementById('input-group-name').value.trim();
+  if (!name) return;
+  const selected = document.querySelector('.color-swatch.selected');
+  const color = selected ? selected.dataset.color : GROUP_COLORS[0];
+
+  if (editingGroupId) {
+    const g = groups.find(x => x.id === editingGroupId);
+    if (g) { g.name = name; g.color = color; }
+  } else {
+    groups.push({ id: 'g_' + Date.now(), name, color });
+  }
+  save();
+  closeModal('group-modal');
+  renderGroupsPage();
+  renderDashboard();
+}
+
+function deleteGroup(id) {
+  groups = groups.filter(g => g.id !== id);
+  holdings.forEach(h => { if (h.groupId === id) h.groupId = UNGROUPED_ID; });
+  save();
+  renderGroupsPage();
+  renderDashboard();
+}
+
+// ═══════════════════════════════════════
+//  ADD / REMOVE STOCK
+// ═══════════════════════════════════════
+async function addStock() {
+  const ticker = document.getElementById('input-ticker').value.trim().toUpperCase();
+  const shares = parseFloat(document.getElementById('input-shares').value);
+  const cost   = parseFloat(document.getElementById('input-cost').value);
+  const groupId = document.getElementById('input-group').value || UNGROUPED_ID;
+
+  if (!ticker || isNaN(shares) || isNaN(cost) || shares <= 0 || cost <= 0) {
+    alert('Please fill in all fields with valid values.');
+    return;
+  }
+  if (holdings.find(h => h.ticker === ticker)) {
+    alert(`${ticker} is already in your portfolio.`);
+    return;
+  }
+
+  holdings.push({ ticker, shares, cost, currentPrice: null, groupId });
+  save();
+  closeModal('add-modal');
+  checkApiBanner();
+
+  if (apiKey) {
+    await fetchPrice(holdings[holdings.length - 1]);
+    save();
+  }
+  renderDashboard();
+}
+
+function removeStock(ticker) {
+  holdings = holdings.filter(h => h.ticker !== ticker);
+  save();
+  renderDashboard();
+  checkApiBanner();
+}
+
+// ═══════════════════════════════════════
+//  PRICE FETCHING
+// ═══════════════════════════════════════
+async function fetchPrice(holding) {
+  if (!apiKey) return;
+  try {
+    const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${holding.ticker}&token=${apiKey}`);
+    const data = await res.json();
+    if (data.c && data.c > 0) holding.currentPrice = data.c;
+  } catch(e) {}
+}
+
+async function refreshPrices() {
+  if (!apiKey) { openApiModal(); return; }
+  if (!holdings.length) return;
+  setStatus('loading', 'Fetching prices…');
+  await Promise.all(holdings.map(fetchPrice));
+  save();
+  renderDashboard();
+  const t = new Date().toLocaleTimeString();
+  setStatus('ok', `Updated at ${t}`);
+  document.getElementById('last-updated').textContent = t;
+  document.getElementById('market-note').textContent = 'live via Finnhub';
+}
+
+function setStatus(type, msg) {
+  document.getElementById('status-dot').className = 'status-dot' + (type === 'loading' ? ' loading' : '');
+  document.getElementById('status-text').textContent = msg;
+}
+
+// ═══════════════════════════════════════
+//  RENDER DASHBOARD
+// ═══════════════════════════════════════
+function renderDashboard() {
+  checkApiBanner();
+  const wrap = document.getElementById('holdings-table-wrap');
+  const totalValue = totalPortfolioValue();
+  let totalCost = holdings.reduce((s, h) => s + h.cost * h.shares, 0);
+  const totalGain = totalValue - totalCost;
+  const totalGainPct = totalCost ? (totalGain / totalCost * 100) : 0;
+
+  document.getElementById('position-count').textContent = holdings.length;
+  document.getElementById('group-count-sub').textContent = `across ${groups.length} group${groups.length !== 1 ? 's' : ''}`;
+  updateSummary(totalValue, totalCost, totalGain, totalGainPct);
+
+  if (!holdings.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="big">📈</div><p>No stocks yet.<br>Click <strong>+ Add Stock</strong> to build your portfolio.</p></div>`;
+    return;
+  }
+  const COLS = `<thead><tr>
+    <th>Ticker</th><th>Group</th>
+    <th class="num">Shares</th><th class="num">Avg Cost</th>
+    <th class="num">Price Today</th><th class="num">Market Value</th>
+    <th class="num">$ Gain/Loss</th><th class="num">% Gain/Loss</th>
+    <th class="num">% of Portfolio</th><th></th>
+  </tr></thead>`;
+
+  if (dashView === 'all') {
+    const sorted = [...holdings].sort((a, b) => a.ticker.localeCompare(b.ticker));
+    wrap.innerHTML = `<table>${COLS}<tbody>${sorted.map(h => stockRow(h, totalValue)).join('')}</tbody></table>`;
+  } else {
+    // Group view
+    const allGroupIds = [...new Set(holdings.map(h => h.groupId || UNGROUPED_ID))];
+    // Sort: named groups first (in groups array order), ungrouped last
+    const orderedIds = [
+      ...groups.map(g => g.id).filter(id => allGroupIds.includes(id)),
+      ...(allGroupIds.includes(UNGROUPED_ID) ? [UNGROUPED_ID] : [])
+    ];
+
+    let html = `<table>${COLS}<tbody>`;
+    orderedIds.forEach(gid => {
+      const gHoldings = holdings.filter(h => (h.groupId || UNGROUPED_ID) === gid).sort((a,b) => a.ticker.localeCompare(b.ticker));
+      if (!gHoldings.length) return;
+      const gValue = gHoldings.reduce((s, h) => s + (h.currentPrice || h.cost) * h.shares, 0);
+      const gCost  = gHoldings.reduce((s, h) => s + h.cost * h.shares, 0);
+      const gGain  = gValue - gCost;
+      const gPct   = totalValue ? (gValue / totalValue * 100) : 0;
+      const color  = groupColor(gid);
+      const name   = groupName(gid);
+      html += `<tr class="group-header-row">
+        <td colspan="2"><span class="group-color-dot" style="background:${color}"></span>${name}</td>
+        <td colspan="4" class="num sens-mktval" style="font-family:var(--mono);font-size:12px;text-align:right">${fmt(gValue)}</td>
+        <td class="num" style="font-family:var(--mono);font-size:12px">${gGain >= 0 ? '<span class="pill-green">+' : '<span class="pill-red">'}${fmt(gGain)}</span></td>
+        <td class="num" style="font-family:var(--mono);font-size:12px">${gCost ? ((gGain/gCost*100) >= 0 ? '<span class="pill-green">+' : '<span class="pill-red">') + (gGain/gCost*100).toFixed(2) + '%</span>' : '—'}</td>
+        <td class="num" style="font-family:var(--mono);font-size:12px">${gPct.toFixed(1)}%</td>
+        <td></td>
+      </tr>`;
+      gHoldings.forEach(h => { html += stockRow(h, totalValue, true); });
+    });
+    html += `</tbody></table>`;
+    wrap.innerHTML = html;
+  }
+  applyHide();
+}
+
+function stockRow(h, totalValue, indent) {
+  const price = h.currentPrice || h.cost;
+  const mktVal = price * h.shares;
+  const gain = (price - h.cost) * h.shares;
+  const gainPct = ((price - h.cost) / h.cost * 100);
+  const portfolioPct = totalValue ? (mktVal / totalValue * 100) : 0;
+  const color = groupColor(h.groupId || UNGROUPED_ID);
+  const name  = groupName(h.groupId || UNGROUPED_ID);
+
+  const gainHtml = gain >= 0
+    ? `<span class="pill-green">+${fmt(gain)}</span>`
+    : `<span class="pill-red">${fmt(gain)}</span>`;
+  const gainPctHtml = gainPct >= 0
+    ? `<span class="pill-green">+${gainPct.toFixed(2)}%</span>`
+    : `<span class="pill-red">${gainPct.toFixed(2)}%</span>`;
+  const priceDisplay = h.currentPrice ? fmt(price) : `<span style="color:var(--muted);font-style:italic">${fmt(price)} (cost)</span>`;
+  const groupCell = indent
+    ? `<td></td>`
+    : `<td><span class="group-badge" style="background:${color}18;color:${color}">${name}</span></td>`;
+
+  return `<tr${indent ? ' class="rebal-stock-row"' : ''}>
+    <td><span class="ticker-badge">${h.ticker}</span></td>
+    ${groupCell}
+    <td class="num sens-shares">${h.shares.toLocaleString()}</td>
+    <td class="num">${fmt(h.cost)}</td>
+    <td class="num">${priceDisplay}</td>
+    <td class="num sens-mktval">${fmt(mktVal)}</td>
+    <td class="num">${gainHtml}</td>
+    <td class="num">${gainPctHtml}</td>
+    <td><div class="bar-wrap"><div class="bar-track"><div class="bar-fill" style="width:${Math.min(portfolioPct,100)}%"></div></div><span class="pct-text">${portfolioPct.toFixed(1)}%</span></div></td>
+    <td style="white-space:nowrap">
+      <button class="btn-ghost" style="padding:4px 8px;font-size:12px" onclick="openEditModal('${h.ticker}')">✎</button>
+      <button class="btn-danger" onclick="removeStock('${h.ticker}')">✕</button>
+    </td>
+  </tr>`;
+}
+
+function updateSummary(totalValue, totalCost, totalGain, totalGainPct) {
+  document.getElementById('total-value').textContent = fmt(totalValue);
+  document.getElementById('total-cost-sub').textContent = `Cost basis: ${fmt(totalCost)}`;
+  const gainEl = document.getElementById('total-gain');
+  gainEl.textContent = (totalGain >= 0 ? '+' : '') + fmt(totalGain);
+  gainEl.className = 'card-value ' + (totalGain >= 0 ? 'green' : 'red');
+  document.getElementById('total-gain-pct').textContent = (totalGainPct >= 0 ? '+' : '') + (totalGainPct||0).toFixed(2) + '% overall';
+}
+
+// ═══════════════════════════════════════
+//  RENDER GROUPS PAGE
+// ═══════════════════════════════════════
+function renderGroupsPage() {
+  const grid = document.getElementById('groups-grid');
+  const totalValue = totalPortfolioValue();
+
+  if (!groups.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="big">🗂️</div><p>No groups yet.<br>Click <strong>+ New Group</strong> to create your first strategy bucket.</p></div>`;
+    return;
+  }
+
+  grid.innerHTML = groups.map(g => {
+    const gHoldings = holdings.filter(h => (h.groupId || UNGROUPED_ID) === g.id);
+    const gValue = gHoldings.reduce((s, h) => s + (h.currentPrice || h.cost) * h.shares, 0);
+    const gPct   = totalValue ? (gValue / totalValue * 100) : 0;
+    return `<div class="group-card">
+      <div class="group-card-header">
+        <div class="group-card-name">
+          <span class="group-color-dot" style="background:${g.color}"></span>${g.name}
+        </div>
+        <div class="group-card-actions">
+          <button class="btn-ghost" onclick="openGroupModal('${g.id}')">✎</button>
+          <button class="btn-danger" onclick="deleteGroup('${g.id}')">✕</button>
+        </div>
+      </div>
+      <div class="group-card-stats">
+        <div><strong>${fmt(gValue)}</strong><br>value</div>
+        <div><strong>${gPct.toFixed(1)}%</strong><br>of portfolio</div>
+        <div><strong>${gHoldings.length}</strong><br>stock${gHoldings.length !== 1 ? 's' : ''}</div>
+      </div>
+      <div class="group-stocks-list">
+        ${gHoldings.length ? gHoldings.map(h => `<span class="ticker-badge">${h.ticker}</span>`).join('') : '<span style="font-size:12px;color:var(--muted)">No stocks assigned</span>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════
+//  RENDER REBALANCER
+// ═══════════════════════════════════════
+function renderRebalancer() {
+  const wrap = document.getElementById('rebal-table-wrap');
+  const totalValue = totalPortfolioValue();
+
+  // Collect all group IDs that have holdings, plus ungrouped if any
+  const usedGroupIds = [...new Set(holdings.map(h => h.groupId || UNGROUPED_ID))];
+  const orderedIds = [
+    ...groups.map(g => g.id).filter(id => usedGroupIds.includes(id)),
+    ...(usedGroupIds.includes(UNGROUPED_ID) ? [UNGROUPED_ID] : [])
+  ];
+
+  if (!orderedIds.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="big">⚖️</div><p>Add stocks on the Dashboard first.</p></div>`;
+    return;
+  }
+
+  // Init groupTargets for new groups
+  orderedIds.forEach(id => {
+    if (groupTargets[id] === undefined) groupTargets[id] = 0;
+  });
+
+  const totalPct = orderedIds.reduce((s, id) => s + (groupTargets[id] || 0), 0);
+  const badge = document.getElementById('total-alloc-badge');
+  badge.textContent = totalPct.toFixed(1) + '%';
+  badge.className = 'total-pct ' + (Math.abs(totalPct - 100) < 0.1 ? 'pct-ok' : Math.abs(totalPct - 100) < 5 ? 'pct-warn' : 'pct-err');
+
+  let html = `<table>
+    <thead><tr>
+      <th>Group / Stock</th>
+      <th class="num">Current %</th>
+      <th class="num">Target %</th>
+    </tr></thead><tbody>`;
+
+  orderedIds.forEach(gid => {
+    const gHoldings = holdings.filter(h => (h.groupId || UNGROUPED_ID) === gid);
+    if (!gHoldings.length) return;
+    const gValue = gHoldings.reduce((s, h) => s + (h.currentPrice || h.cost) * h.shares, 0);
+    const gCurrentPct = totalValue ? (gValue / totalValue * 100) : 0;
+    const color = groupColor(gid);
+    const name  = groupName(gid);
+
+    html += `<tr class="rebal-group-header">
+      <td><span class="group-color-dot" style="background:${color}"></span><strong>${name}</strong></td>
+      <td class="num">${gCurrentPct.toFixed(1)}%</td>
+      <td class="num">
+        <input class="rebal-input" type="number" min="0" max="100" step="0.1"
+          value="${groupTargets[gid] || ''}" placeholder="0"
+          oninput="updateGroupTarget('${gid}', this.value)">
+      </td>
+    </tr>`;
+
+    // Show each stock's current % of portfolio (read-only — auto-calculated)
+    gHoldings.sort((a,b) => a.ticker.localeCompare(b.ticker)).forEach(h => {
+      const price = h.currentPrice || h.cost;
+      const mktVal = price * h.shares;
+      const stockPct = totalValue ? (mktVal / totalValue * 100) : 0;
+      const stockPctOfGroup = gValue ? (mktVal / gValue * 100) : 0;
+      html += `<tr class="rebal-stock-row">
+        <td style="padding-left:32px"><span class="ticker-badge">${h.ticker}</span> <span style="font-size:11px;color:var(--muted)">${stockPctOfGroup.toFixed(1)}% of group</span></td>
+        <td class="num">${stockPct.toFixed(1)}%</td>
+        <td class="num" style="color:var(--muted);font-size:11px">auto</td>
+      </tr>`;
+    });
+  });
+
+  html += `</tbody></table>`;
+  wrap.innerHTML = html;
+}
+
+function updateGroupTarget(gid, val) {
+  groupTargets[gid] = parseFloat(val) || 0;
+  const usedGroupIds = [...new Set(holdings.map(h => h.groupId || UNGROUPED_ID))];
+  const totalPct = usedGroupIds.reduce((s, id) => s + (groupTargets[id] || 0), 0);
+  const badge = document.getElementById('total-alloc-badge');
+  badge.textContent = totalPct.toFixed(1) + '%';
+  badge.className = 'total-pct ' + (Math.abs(totalPct - 100) < 0.1 ? 'pct-ok' : Math.abs(totalPct - 100) < 5 ? 'pct-warn' : 'pct-err');
+}
+
+// ═══════════════════════════════════════
+//  CALCULATE TRADES
+// ═══════════════════════════════════════
+function calculate() {
+  const usedGroupIds = [...new Set(holdings.map(h => h.groupId || UNGROUPED_ID))];
+  const totalPct = usedGroupIds.reduce((s, id) => s + (groupTargets[id] || 0), 0);
+
+  if (Math.abs(totalPct - 100) > 0.5) {
+    document.getElementById('trade-results').innerHTML =
+      `<div style="padding:20px;text-align:center;color:var(--red);font-size:13px;">
+        Group allocations must add to 100%.<br>Current total: ${totalPct.toFixed(1)}%
+      </div>`;
+    return;
+  }
+
+  const newCash = parseFloat(document.getElementById('new-cash').value) || 0;
+  const currentTotal = totalPortfolioValue();
+  const totalPool = currentTotal + newCash;
+
+  const orderedIds = [
+    ...groups.map(g => g.id).filter(id => usedGroupIds.includes(id)),
+    ...(usedGroupIds.includes(UNGROUPED_ID) ? [UNGROUPED_ID] : [])
+  ];
+
+  let html = '';
+
+  orderedIds.forEach(gid => {
+    const gHoldings = holdings.filter(h => (h.groupId || UNGROUPED_ID) === gid);
+    if (!gHoldings.length) return;
+
+    const targetGroupVal = totalPool * ((groupTargets[gid] || 0) / 100);
+    const currentGroupVal = gHoldings.reduce((s, h) => s + (h.currentPrice || h.cost) * h.shares, 0);
+
+    const color = groupColor(gid);
+    const name  = groupName(gid);
+    html += `<div class="result-group-label"><span class="group-color-dot" style="background:${color}"></span>${name}</div>`;
+
+    // Distribute target group value proportionally by current weight within group
+    gHoldings.sort((a,b) => a.ticker.localeCompare(b.ticker)).forEach(h => {
+      const price = h.currentPrice || h.cost;
+      if (!price) {
+        html += `<div class="result-row"><span class="result-ticker">${h.ticker}</span><span class="result-action action-hold">No price</span><span class="result-shares" style="color:var(--muted)">—</span></div>`;
+        return;
+      }
+
+      const currentStockVal = price * h.shares;
+      // Proportional share of target group value
+      const stockWeight = currentGroupVal > 0 ? (currentStockVal / currentGroupVal) : (1 / gHoldings.length);
+      const targetStockVal = targetGroupVal * stockWeight;
+      const diff = targetStockVal - currentStockVal;
+      const sharesDiff = diff / price;
+      const threshold = Math.max(price * 0.5, 1); // ignore < half a share price or $1
+
+      if (Math.abs(diff) < threshold) {
+        html += `<div class="result-row"><span class="result-ticker">${h.ticker}</span><span class="result-action action-hold">Hold</span><span class="result-shares" style="color:var(--muted)">On target</span></div>`;
+      } else if (diff > 0) {
+        html += `<div class="result-row"><span class="result-ticker">${h.ticker}</span><span class="result-action action-buy">Buy</span><span class="result-shares">+${Math.abs(sharesDiff).toFixed(2)} sh<br><span style="color:var(--muted);font-size:11px">${fmt(Math.abs(diff))}</span></span></div>`;
+      } else {
+        html += `<div class="result-row"><span class="result-ticker">${h.ticker}</span><span class="result-action action-sell">Sell</span><span class="result-shares">-${Math.abs(sharesDiff).toFixed(2)} sh<br><span style="color:var(--muted);font-size:11px">${fmt(Math.abs(diff))}</span></span></div>`;
+      }
+    });
+  });
+
+  document.getElementById('trade-results').innerHTML = html || `<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">No trades needed.</div>`;
+}
+
+// ═══════════════════════════════════════
+//  EXPORT CSV
+// ═══════════════════════════════════════
+function exportCSV() {
+  if (!holdings.length) return;
+  const totalValue = totalPortfolioValue();
+  let csv = 'Ticker,Group,Shares,Avg Cost,Current Price,Market Value,$ Gain,% Gain,% Portfolio\n';
+  [...holdings].sort((a,b) => a.ticker.localeCompare(b.ticker)).forEach(h => {
+    const price = h.currentPrice || h.cost;
+    const mktVal = price * h.shares;
+    const gain = (price - h.cost) * h.shares;
+    const gainPct = ((price - h.cost) / h.cost * 100).toFixed(2);
+    const pct = totalValue ? (mktVal / totalValue * 100).toFixed(1) : 0;
+    csv += `${h.ticker},${groupName(h.groupId)},${h.shares},${h.cost},${price},${mktVal.toFixed(2)},${gain.toFixed(2)},${gainPct}%,${pct}%\n`;
+  });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = `portfolio_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+// ═══════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════
+function fmt(n) {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n || 0);
+}
+
+// ═══════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════
+(async function init() {
+  checkApiBanner();
+  renderDashboard();
+  if (apiKey && holdings.length) {
+    setStatus('loading', 'Fetching prices…');
+    await Promise.all(holdings.map(fetchPrice));
+    save();
+    renderDashboard();
+    const t = new Date().toLocaleTimeString();
+    setStatus('ok', `Updated at ${t}`);
+    document.getElementById('last-updated').textContent = t;
+    document.getElementById('market-note').textContent = 'live via Finnhub';
+  }
+})();
+</script>
+</body>
+</html>
