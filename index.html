@@ -73,7 +73,8 @@
   .btn-danger:hover { opacity: 1; background: var(--red-bg); }
 
   table { width: 100%; border-collapse: collapse; }
-  thead th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); background: var(--surface2); border-bottom: 1px solid var(--border); position: sticky; top: 56px; z-index: 10; }
+  thead th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); background: var(--surface2); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+  .table-scroll { overflow-y: auto; max-height: calc(100vh - 280px); }
   thead th.num { text-align: right; }
   tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
   tbody tr:last-child { border-bottom: none; }
@@ -772,7 +773,7 @@ function renderDashboard() {
 
   if (dashView === 'all') {
     const sorted = [...holdings].sort((a, b) => a.ticker.localeCompare(b.ticker));
-    wrap.innerHTML = `<table>${COLS}<tbody>${sorted.map(h => stockRow(h, totalValue)).join('')}</tbody></table>`;
+    wrap.innerHTML = `<div class="table-scroll"><table>${COLS}<tbody>${sorted.map(h => stockRow(h, totalValue)).join('')}</tbody></table></div>`;
   } else {
     // Group view
     const allGroupIds = [...new Set(holdings.map(h => h.groupId || UNGROUPED_ID))];
@@ -803,7 +804,7 @@ function renderDashboard() {
       gHoldings.forEach(h => { html += stockRow(h, totalValue, true); });
     });
     html += `</tbody></table>`;
-    wrap.innerHTML = html;
+    wrap.innerHTML = `<div class="table-scroll">${html}</div>`;
   }
   applyHide();
 }
@@ -990,7 +991,7 @@ function renderRebalancer() {
   });
 
   html += `</tbody></table>`;
-  wrap.innerHTML = html;
+  wrap.innerHTML = `<div class="table-scroll">${html}</div>`;
 }
 
 function updateGroupTarget(gid, val) {
@@ -1344,7 +1345,7 @@ function renderFullView() {
   });
 
   html += `</tbody></table></div>`;
-  wrap.innerHTML = html;
+  wrap.innerHTML = `<div class="table-scroll">${html}</div>`;
 }
 
 // ── WATCHLIST TAB (no % change columns)
@@ -1376,7 +1377,7 @@ function renderWatchlistTab() {
       </td>
     </tr>`;
   });
-  wrap.innerHTML = `<div style="overflow-x:auto"><table>
+  wrap.innerHTML = `<div class="table-scroll"><div style="overflow-x:auto"><table>
     <thead><tr>
       <th>Ticker</th><th>Name</th><th>Group</th>
       ${INSIGHT_HEADERS}
@@ -1384,7 +1385,7 @@ function renderWatchlistTab() {
       <th></th>
     </tr></thead>
     <tbody>${rows}</tbody>
-  </table></div>`;
+  </table></div></div>`;
 }
 
 function toggleWatchRebal(ticker, checked) {
