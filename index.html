@@ -180,6 +180,8 @@
   .setup-banner { background: var(--accent-light); border: 1px solid #bfdbfe; border-radius: var(--radius); padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
   .setup-banner p { font-size: 13px; color: #1e40af; }
 
+  .strat-group-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted); padding:10px 0 6px; display:flex; align-items:center; gap:6px; }
+  .insight-row td { padding: 11px 14px; }
   .blurred { filter: blur(6px); user-select: none; pointer-events: none; transition: filter 0.2s; }
 
   @media (max-width: 960px) {
@@ -195,9 +197,9 @@
   <div class="logo"><span class="logo-dot"></span> Portfolio</div>
   <nav>
     <button class="active" onclick="showPage('dashboard', this)">Dashboard</button>
-    <button onclick="showPage('groups', this)">Groups</button>
-    <button onclick="showPage('watchlist', this)">Watchlist</button>
+    <button onclick="showPage('strategy', this)">Strategy</button>
     <button onclick="showPage('rebalancer', this)">Rebalancer</button>
+    <button onclick="showPage('groups', this)">Groups</button>
   </nav>
   <div class="header-right">
     <button class="api-key-btn" id="hide-btn" onclick="toggleHide()" title="Hide values">👁 Hide Values</button>
@@ -306,20 +308,32 @@
 </div>
 
 
-<!-- ═══════════════════ WATCHLIST ═══════════════════ -->
-<div class="page" id="page-watchlist">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+<!-- ═══════════════════ STRATEGY ═══════════════════ -->
+<div class="page" id="page-strategy">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
     <div>
-      <h2 style="font-size:18px;font-weight:600;margin-bottom:4px;">Watchlist</h2>
-      <p style="font-size:13px;color:var(--muted);">Stocks you're considering buying. Toggle them into the Rebalancer to see what you'd need to purchase.</p>
+      <h2 style="font-size:18px;font-weight:600;margin-bottom:4px;">Strategy</h2>
+      <p style="font-size:13px;color:var(--muted);">Full portfolio view by group, plus your watchlist of stocks under consideration.</p>
     </div>
-    <div style="display:flex;gap:8px">
+    <div style="display:flex;gap:8px;align-items:center;">
       <button class="btn btn-secondary" onclick="refreshWatchlistPrices()">↻ Refresh</button>
-      <button class="btn btn-primary" onclick="openAddWatchModal()">+ Add to Watchlist</button>
+      <button class="btn btn-primary" id="strategy-add-btn" onclick="openAddWatchModal()">+ Add to Watchlist</button>
     </div>
   </div>
-  <div class="table-wrap">
-    <div id="watchlist-table-wrap"></div>
+
+  <!-- Inner tab toggle -->
+  <div style="margin-bottom:20px;">
+    <div class="view-toggle">
+      <button class="active" id="strat-btn-full" onclick="setStrategyTab('full')">Full View</button>
+      <button id="strat-btn-watch" onclick="setStrategyTab('watch')">Watchlist</button>
+    </div>
+  </div>
+
+  <div id="strategy-full-wrap"></div>
+  <div id="strategy-watch-wrap" style="display:none">
+    <div class="table-wrap">
+      <div id="watchlist-table-wrap"></div>
+    </div>
   </div>
 </div>
 
@@ -489,7 +503,7 @@ function showPage(name, btn) {
   document.getElementById('page-' + name).classList.add('active');
   btn.classList.add('active');
   if (name === 'groups') renderGroupsPage();
-  if (name === 'watchlist') renderWatchlist();
+  if (name === 'strategy') renderStrategyPage();
   if (name === 'rebalancer') renderRebalancer();
 }
 
@@ -1103,7 +1117,7 @@ async function addToWatchlist() {
   save();
   closeModal('add-watch-modal');
   if (apiKey) { await fetchWatchPrice(item); save(); }
-  renderWatchlist();
+  renderStrategyPage();
 }
 
 async function fetchWatchPrice(item) {
@@ -1147,19 +1161,43 @@ async function fetchWatchPrice(item) {
 
 async function refreshWatchlistPrices() {
   if (!apiKey) { openApiModal(); return; }
-  if (!watchlist.length) return;
-  setStatus('loading', 'Refreshing watchlist…');
+  setStatus('loading', 'Refreshing strategy data…');
+  // Refresh watchlist prices AND portfolio insight data
+  const allItems = [
+    ...watchlist,
+    ...holdings.map(h => ({ ticker: h.ticker, groupId: h.groupId, currentPrice: h.currentPrice,
+      companyName: h.companyName, marketCap: h.marketCap, pe: h.pe,
+      week52High: h.week52High, week52Low: h.week52Low }))
+  ];
   await Promise.all(watchlist.map(fetchWatchPrice));
+  await Promise.all(holdings.map(h => fetchHoldingInsights(h)));
   save();
-  renderWatchlist();
+  renderStrategyPage();
   setStatus('ok', `Updated at ${new Date().toLocaleTimeString()}`);
+}
+
+async function fetchHoldingInsights(h) {
+  if (!apiKey) return;
+  try {
+    const [pRes, fRes] = await Promise.all([
+      fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${h.ticker}&token=${apiKey}`),
+      fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${h.ticker}&metric=all&token=${apiKey}`)
+    ]);
+    const p = await pRes.json();
+    const f = await fRes.json();
+    if (p.marketCapitalization) h.marketCap = p.marketCapitalization * 1e6;
+    const m = f.metric || {};
+    h.pe         = m.peBasicExclExtraTTM || m.peTTM || null;
+    h.week52High = m['52WeekHigh'] || null;
+    h.week52Low  = m['52WeekLow']  || null;
+  } catch(e) {}
 }
 
 function removeWatchItem(ticker) {
   watchlist = watchlist.filter(w => w.ticker !== ticker);
   delete watchlistInRebal[ticker];
   save();
-  renderWatchlist();
+  renderStrategyPage();
 }
 
 function moveToPortfolio(ticker) {
@@ -1172,7 +1210,7 @@ function moveToPortfolio(ticker) {
   watchlist = watchlist.filter(w => w.ticker !== ticker);
   delete watchlistInRebal[ticker];
   save();
-  renderWatchlist();
+  renderStrategyPage();
   renderDashboard();
 }
 
@@ -1190,7 +1228,127 @@ function fmtCap(v) {
   return fmt(v);
 }
 
-function renderWatchlist() {
+function week52Bar(item) {
+  const price = item.currentPrice || 0;
+  if (!item.week52High || !item.week52Low || !price) return '<span style="color:var(--muted)">—</span>';
+  const range = item.week52High - item.week52Low;
+  const pos = range > 0 ? Math.min(100, Math.max(0, (price - item.week52Low) / range * 100)) : 50;
+  return `<div style="font-size:10px;color:var(--muted);white-space:nowrap;text-align:right">
+    ${fmt(item.week52Low)}
+    <div class="bar-track" style="width:60px;display:inline-block;vertical-align:middle;margin:0 4px">
+      <div class="bar-fill" style="width:${pos.toFixed(0)}%;background:${pos > 70 ? 'var(--green)' : pos < 30 ? 'var(--red)' : 'var(--accent)'}"></div>
+    </div>
+    ${fmt(item.week52High)}
+  </div>`;
+}
+
+function insightCols(item) {
+  return `
+    <td class="num">${item.currentPrice ? fmt(item.currentPrice) : '<span style="color:var(--muted)">—</span>'}</td>
+    <td class="num">${fmtCap(item.marketCap)}</td>
+    <td class="num">${item.pe != null ? item.pe.toFixed(1) : '<span style="color:var(--muted)">—</span>'}</td>
+    <td class="num">${week52Bar(item)}</td>`;
+}
+
+const INSIGHT_HEADERS = `<th class="num">Price</th><th class="num">Mkt Cap</th><th class="num">P/E</th><th class="num">52wk Range</th>`;
+
+// ── STRATEGY PAGE STATE
+let strategyTab = 'full'; // 'full' | 'watch'
+
+function setStrategyTab(tab) {
+  strategyTab = tab;
+  document.getElementById('strat-btn-full').classList.toggle('active', tab === 'full');
+  document.getElementById('strat-btn-watch').classList.toggle('active', tab === 'watch');
+  document.getElementById('strategy-full-wrap').style.display  = tab === 'full'  ? '' : 'none';
+  document.getElementById('strategy-watch-wrap').style.display = tab === 'watch' ? '' : 'none';
+  document.getElementById('strategy-add-btn').style.display    = tab === 'watch' ? '' : 'none';
+}
+
+function renderStrategyPage() {
+  renderFullView();
+  renderWatchlistTab();
+  // Apply current tab visibility
+  setStrategyTab(strategyTab);
+}
+
+// ── FULL VIEW: portfolio + watchlist, by group
+function renderFullView() {
+  const wrap = document.getElementById('strategy-full-wrap');
+
+  // Combine holdings and toggled-in watchlist items into one list per group
+  const allGroupIds = [
+    ...new Set([
+      ...holdings.map(h => h.groupId || UNGROUPED_ID),
+      ...watchlist.map(w => w.groupId || UNGROUPED_ID)
+    ])
+  ];
+  const orderedIds = [
+    ...groups.map(g => g.id).filter(id => allGroupIds.includes(id)),
+    ...(allGroupIds.includes(UNGROUPED_ID) ? [UNGROUPED_ID] : [])
+  ];
+
+  if (!orderedIds.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="big">📊</div><p>Add stocks on the Dashboard to see your full strategy view.</p></div>`;
+    return;
+  }
+
+  let html = `<div style="overflow-x:auto"><table>
+    <thead><tr>
+      <th>Ticker</th><th>Name</th><th>Status</th>
+      ${INSIGHT_HEADERS}
+      <th style="text-align:center">Rebalancer</th>
+    </tr></thead><tbody>`;
+
+  orderedIds.forEach(gid => {
+    const gHoldings = holdings.filter(h => (h.groupId || UNGROUPED_ID) === gid);
+    const gWatchlist = watchlist.filter(w => (w.groupId || UNGROUPED_ID) === gid);
+    if (!gHoldings.length && !gWatchlist.length) return;
+
+    const color = groupColor(gid);
+    const name  = groupName(gid);
+
+    html += `<tr class="group-header-row">
+      <td colspan="7"><span class="group-color-dot" style="background:${color}"></span><strong>${name}</strong>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">${gHoldings.length} held · ${gWatchlist.length} watching</span>
+      </td>
+      <td style="text-align:center;background:var(--surface2)"></td>
+    </tr>`;
+
+    // Portfolio holdings in this group
+    [...gHoldings].sort((a,b) => a.ticker.localeCompare(b.ticker)).forEach(h => {
+      html += `<tr class="insight-row">
+        <td><span class="ticker-badge">${h.ticker}</span></td>
+        <td style="font-size:12px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.companyName || '—'}</td>
+        <td><span class="pill-green" style="font-size:10px">Held</span></td>
+        ${insightCols(h)}
+        <td style="text-align:center">—</td>
+      </tr>`;
+    });
+
+    // Watchlist stocks in this group
+    [...gWatchlist].sort((a,b) => a.ticker.localeCompare(b.ticker)).forEach(w => {
+      const inRebal = watchlistInRebal[w.ticker] || false;
+      html += `<tr class="insight-row">
+        <td><span class="ticker-badge">${w.ticker}</span></td>
+        <td style="font-size:12px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${w.companyName || '—'}</td>
+        <td><span class="watchlist-badge">Watching</span></td>
+        ${insightCols(w)}
+        <td style="text-align:center">
+          <label class="toggle-switch">
+            <input type="checkbox" ${inRebal ? 'checked' : ''} onchange="toggleWatchRebal('${w.ticker}', this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </td>
+      </tr>`;
+    });
+  });
+
+  html += `</tbody></table></div>`;
+  wrap.innerHTML = html;
+}
+
+// ── WATCHLIST TAB (no % change columns)
+function renderWatchlistTab() {
   const wrap = document.getElementById('watchlist-table-wrap');
   if (!watchlist.length) {
     wrap.innerHTML = `<div class="empty-state"><div class="big">👀</div><p>No stocks on your watchlist yet.<br>Click <strong>+ Add to Watchlist</strong> to start tracking.</p></div>`;
@@ -1198,40 +1356,16 @@ function renderWatchlist() {
   }
   let rows = '';
   [...watchlist].sort((a,b) => a.ticker.localeCompare(b.ticker)).forEach(w => {
-    const price  = w.currentPrice || 0;
-    const color  = groupColor(w.groupId || UNGROUPED_ID);
-    const gname  = groupName(w.groupId || UNGROUPED_ID);
+    const color   = groupColor(w.groupId || UNGROUPED_ID);
+    const gname   = groupName(w.groupId || UNGROUPED_ID);
     const inRebal = watchlistInRebal[w.ticker] || false;
-
-    // 52wk position bar
-    let wkBarHtml = '<span style="color:var(--muted)">—</span>';
-    if (w.week52High && w.week52Low && price) {
-      const range = w.week52High - w.week52Low;
-      const pos = range > 0 ? Math.min(100, Math.max(0, (price - w.week52Low) / range * 100)) : 50;
-      wkBarHtml = `
-        <div style="font-size:10px;color:var(--muted);white-space:nowrap;text-align:right">
-          ${fmt(w.week52Low)}
-          <div class="bar-track" style="width:70px;display:inline-block;vertical-align:middle;margin:0 4px">
-            <div class="bar-fill" style="width:${pos.toFixed(0)}%;background:${pos > 70 ? 'var(--green)' : pos < 30 ? 'var(--red)' : 'var(--accent)'}"></div>
-          </div>
-          ${fmt(w.week52High)}
-        </div>`;
-    }
-
-    rows += `<tr>
+    rows += `<tr class="insight-row">
       <td><span class="ticker-badge">${w.ticker}</span></td>
       <td style="font-size:12px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${w.companyName || '—'}</td>
       <td><span class="group-badge" style="background:${color}18;color:${color}">${gname}</span></td>
-      <td class="num">${price ? fmt(price) : '<span style="color:var(--muted)">—</span>'}</td>
-      <td class="num">${fmtCap(w.marketCap)}</td>
-      <td class="num">${w.pe != null ? w.pe.toFixed(1) : '<span style="color:var(--muted)">—</span>'}</td>
-      <td class="num">${wkBarHtml}</td>
-      <td class="num">${fmtChg(w.chg1m)}</td>
-      <td class="num">${fmtChg(w.chg3m)}</td>
-      <td class="num">${fmtChg(w.chg1y)}</td>
-      <td class="num">${fmtChg(w.chg2y)}</td>
+      ${insightCols(w)}
       <td style="text-align:center">
-        <label class="toggle-switch" title="${inRebal ? 'Remove from rebalancer' : 'Include in rebalancer'}">
+        <label class="toggle-switch">
           <input type="checkbox" ${inRebal ? 'checked' : ''} onchange="toggleWatchRebal('${w.ticker}', this.checked)">
           <span class="toggle-slider"></span>
         </label>
@@ -1245,14 +1379,7 @@ function renderWatchlist() {
   wrap.innerHTML = `<div style="overflow-x:auto"><table>
     <thead><tr>
       <th>Ticker</th><th>Name</th><th>Group</th>
-      <th class="num">Price</th>
-      <th class="num">Mkt Cap</th>
-      <th class="num">P/E</th>
-      <th class="num">52wk Range</th>
-      <th class="num">1mo</th>
-      <th class="num">3mo</th>
-      <th class="num">1yr</th>
-      <th class="num">2yr</th>
+      ${INSIGHT_HEADERS}
       <th style="text-align:center">Rebalancer</th>
       <th></th>
     </tr></thead>
@@ -1263,6 +1390,8 @@ function renderWatchlist() {
 function toggleWatchRebal(ticker, checked) {
   watchlistInRebal[ticker] = checked;
   save();
+  // Re-render full view so toggle stays in sync
+  if (strategyTab === 'full') renderFullView();
 }
 
 // ═══════════════════════════════════════
