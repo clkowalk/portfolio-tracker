@@ -1437,11 +1437,15 @@ function importJSON(event) {
       if (!data.holdings || !data.groups) throw new Error('Invalid file');
       holdings = data.holdings;
       groups = data.groups;
+      watchlist = data.watchlist || [];
+      stockOverrides = data.stockOverrides || {};
+      watchlistInRebal = data.watchlistInRebal || {};
       groupTargets = {};
       save();
       renderDashboard();
       renderGroupsPage();
-      alert(`Imported ${holdings.length} stocks across ${groups.length} groups.`);
+      renderStrategyPage();
+      alert(`Imported ${data.holdings.length} stocks, ${data.groups.length} groups, and ${(data.watchlist||[]).length} watchlist items.`);
     } catch(err) {
       alert('Import failed — please make sure you\'re using a valid portfolio backup file.');
     }
