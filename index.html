@@ -203,14 +203,14 @@
   ══════════════════════════════════════ */
   #page-timeline { padding: 0; max-width: 100%; background: #ffffff; min-height: calc(100vh - 56px); }
   #page-timeline.active { display: block; }
-  .tl-wrap { font-family: 'Courier New', Courier, monospace; background: #ffffff; color: #1a1a18; min-height: calc(100vh - 56px); }
+  .tl-wrap { font-family: 'Courier New', Courier, monospace; background: #ffffff; color: #1a1a18; min-height: calc(100vh - 56px); max-width: 1280px; margin: 0 auto; padding: 0 32px; }
   .tl-header { padding: 36px 28px 22px; border-bottom: 1px solid #e2e2de; }
   .tl-eyebrow { font-size: 10px; letter-spacing: 0.3em; color: #9ca3af; text-transform: uppercase; margin-bottom: 8px; }
   .tl-h1 { margin: 0; font-size: clamp(18px, 3.5vw, 30px); font-weight: 700; letter-spacing: -0.02em; color: #1a1a18; line-height: 1.1; }
   .tl-sub { margin-top: 8px; color: #6b6b66; font-size: 12px; max-width: 520px; line-height: 1.6; }
   .tl-legend { padding: 12px 28px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #e2e2de; }
   .tl-legend-label { font-size: 9px; color: #9ca3af; letter-spacing: 0.15em; text-transform: uppercase; white-space: nowrap; }
-  .tl-legend-bar { flex: 1; height: 2px; background: linear-gradient(90deg, #C0392B, #27AE60, #16A085); border-radius: 2px; }
+  .tl-legend-bar { flex: 1; height: 6px; border-radius: 3px; overflow: hidden; display: flex; }
   .tl-cards { padding: 16px 16px 0; }
   .tl-gen-card { margin-bottom: 8px; border-radius: 8px; border: 1px solid #e2e2de; background: #f9f9f7; cursor: pointer; overflow: hidden; transition: border-color 0.2s, background 0.2s; }
   .tl-gen-card.open { background: #f0f0ee; }
@@ -253,17 +253,11 @@
   .tl-timeline-dot { position: absolute; left: 40%; top: 50%; transform: translate(-50%,-50%); width: 9px; height: 9px; border-radius: 50%; border: 2px solid #ffffff; }
   .tl-timeline-end { font-size: 10px; color: #6b6b66; min-width: 108px; text-align: right; }
   .tl-timeline-note { margin-top: 5px; font-size: 10px; color: #9ca3af; font-style: italic; }
-  .tl-footer { margin: 16px 16px 28px; padding: 14px; border-radius: 8px; border: 1px solid #e2e2de; background: #f9f9f7; }
-  .tl-footer-title { font-size: 8px; letter-spacing: 0.25em; text-transform: uppercase; color: #9ca3af; margin-bottom: 12px; }
-  .tl-bar-chart { display: flex; align-items: flex-end; height: 48px; gap: 3px; }
-  .tl-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; }
-  .tl-bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 3px; }
-  .tl-bar-labels { display: flex; margin-top: 5px; }
-  .tl-bar-label { flex: 1; text-align: center; font-size: 10px; font-weight: 700; }
-  .tl-cat-legend { margin-top: 14px; padding-top: 12px; border-top: 1px solid #e2e2de; }
+  .tl-footer { margin: 8px 16px 28px; padding: 14px 16px; border-radius: 8px; border: 1px solid #e2e2de; background: #f9f9f7; }
+  .tl-footer-title { font-size: 8px; letter-spacing: 0.25em; text-transform: uppercase; color: #9ca3af; margin-bottom: 12px; display:none; }
+
   .tl-cat-legend-title { font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase; color: #9ca3af; margin-bottom: 8px; }
   .tl-cat-badges { display: flex; flex-wrap: wrap; gap: 6px; }
-  .tl-footer-note { margin-top: 10px; font-size: 10px; color: #9ca3af; text-align: center; font-style: italic; }
   @media (max-width: 600px) { .tl-2col { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -422,20 +416,14 @@
     </div>
     <div class="tl-legend">
       <span class="tl-legend-label">Speed (log scale)</span>
-      <div class="tl-legend-bar"></div>
+      <div class="tl-legend-bar" id="tl-legend-bar"></div>
       <span class="tl-legend-label">2 kbps → 1 Tbps</span>
     </div>
-    <div class="tl-cards" id="tl-cards"></div>
-    <div class="tl-footer">
-      <div class="tl-footer-title">Speed Growth · 1G → 6G (log scale)</div>
-      <div class="tl-bar-chart" id="tl-bar-chart"></div>
-      <div class="tl-bar-labels" id="tl-bar-labels"></div>
-      <div class="tl-cat-legend">
-        <div class="tl-cat-legend-title">⛏️ Infrastructure Categories</div>
-        <div class="tl-cat-badges" id="tl-cat-badges"></div>
-      </div>
-      <div class="tl-footer-note">Speed has multiplied ~500,000,000× across six generations — from 2 kbps to 1 Tbps</div>
+    <div class="tl-footer" style="margin:0;border-radius:0;border-left:none;border-right:none;border-top:none;background:#ffffff;">
+      <div class="tl-cat-legend-title">⛏️ Infrastructure Categories to evaluate</div>
+      <div class="tl-cat-badges" id="tl-cat-badges"></div>
     </div>
+    <div class="tl-cards" id="tl-cards"></div>
   </div>
 </div>
 
@@ -1781,10 +1769,15 @@ function renderTimeline() {
     </div>`;
   }).join('');
 
-  const barChart  = document.getElementById('tl-bar-chart');
-  const barLabels = document.getElementById('tl-bar-labels');
-  barChart.innerHTML  = TL_GENERATIONS.map(gen => { const h=Math.max(3,(Math.log10(gen.speedVal)/logMax)*100); return `<div class="tl-bar-col"><div class="tl-bar" style="height:${h}%;background:linear-gradient(180deg,${gen.accent},${gen.color});opacity:${gen.future?0.5:1}"></div></div>`; }).join('');
-  barLabels.innerHTML = TL_GENERATIONS.map(gen => `<div class="tl-bar-label" style="color:${gen.accent}">${gen.id}</div>`).join('');
+  // Build segmented speed legend bar — one segment per generation, width proportional to log speed
+  const legendBar = document.getElementById('tl-legend-bar');
+  const totalLog = TL_GENERATIONS.reduce((s, gen) => s + (Math.log10(gen.speedVal) / logMax), 0);
+  legendBar.innerHTML = TL_GENERATIONS.map(gen => {
+    const w = ((Math.log10(gen.speedVal) / logMax) / totalLog * 100).toFixed(2);
+    return `<div title="${gen.id}: ${gen.speed}" style="flex:0 0 ${w}%;background:linear-gradient(90deg,${gen.color},${gen.accent});opacity:${gen.future?0.6:1};height:100%"></div>`;
+  }).join('');
+
+  // Infrastructure category badges
   document.getElementById('tl-cat-badges').innerHTML = Object.entries(TL_CAT_COLORS).map(([cat,c]) => `<span class="tl-cat-badge" style="background:${c.bg};color:${c.text}">${cat}</span>`).join('');
 }
 
