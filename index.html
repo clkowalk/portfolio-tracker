@@ -6,7 +6,7 @@
 <title>Portfolio Tracker</title>
 <style>
   :root {
-    --bg: #f5f5f3;
+    --bg: #ffffff;
     --surface: #ffffff;
     --surface2: #f0f0ee;
     --border: #e2e2de;
@@ -78,7 +78,7 @@
   thead th.num { text-align: right; }
   tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
   tbody tr:last-child { border-bottom: none; }
-  tbody tr:hover { background: var(--bg); }
+  tbody tr:hover { background: #f7f7f5; }
   td { padding: 11px 16px; font-size: 13px; }
   td.num { text-align: right; font-family: var(--mono); font-size: 12px; }
 
@@ -183,6 +183,13 @@
 
   .strat-group-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted); padding:10px 0 6px; display:flex; align-items:center; gap:6px; }
   .insight-row td { padding: 11px 14px; }
+  .settings-row { display:flex; align-items:center; gap:14px; padding:12px 14px; border-radius:8px; background:var(--surface2); border:1px solid var(--border); cursor:pointer; width:100%; text-align:left; font-family:var(--font); transition:all 0.15s; }
+  .settings-row:hover { border-color:var(--accent); background:var(--accent-light); }
+  .settings-icon { font-size:18px; width:28px; text-align:center; flex-shrink:0; }
+  .settings-label { flex:1; }
+  .settings-title { font-size:13px; font-weight:600; color:var(--text); }
+  .settings-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+  .settings-chevron { font-size:18px; color:var(--muted); }
   .blurred { filter: blur(6px); user-select: none; pointer-events: none; transition: filter 0.2s; }
 
   @media (max-width: 960px) {
@@ -190,6 +197,74 @@
     .summary-row { grid-template-columns: repeat(2, 1fr); }
     .rebal-side { position: static; }
   }
+
+  /* ══════════════════════════════════════
+     5G TIMELINE PAGE
+  ══════════════════════════════════════ */
+  #page-timeline { padding: 0; max-width: 100%; background: #ffffff; min-height: calc(100vh - 56px); }
+  #page-timeline.active { display: block; }
+  .tl-wrap { font-family: 'Courier New', Courier, monospace; background: #ffffff; color: #1a1a18; min-height: calc(100vh - 56px); }
+  .tl-header { padding: 36px 28px 22px; border-bottom: 1px solid #e2e2de; }
+  .tl-eyebrow { font-size: 10px; letter-spacing: 0.3em; color: #9ca3af; text-transform: uppercase; margin-bottom: 8px; }
+  .tl-h1 { margin: 0; font-size: clamp(18px, 3.5vw, 30px); font-weight: 700; letter-spacing: -0.02em; color: #1a1a18; line-height: 1.1; }
+  .tl-sub { margin-top: 8px; color: #6b6b66; font-size: 12px; max-width: 520px; line-height: 1.6; }
+  .tl-legend { padding: 12px 28px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #e2e2de; }
+  .tl-legend-label { font-size: 9px; color: #9ca3af; letter-spacing: 0.15em; text-transform: uppercase; white-space: nowrap; }
+  .tl-legend-bar { flex: 1; height: 2px; background: linear-gradient(90deg, #C0392B, #27AE60, #16A085); border-radius: 2px; }
+  .tl-cards { padding: 16px 16px 0; }
+  .tl-gen-card { margin-bottom: 8px; border-radius: 8px; border: 1px solid #e2e2de; background: #f9f9f7; cursor: pointer; overflow: hidden; transition: border-color 0.2s, background 0.2s; }
+  .tl-gen-card.open { background: #f0f0ee; }
+  .tl-card-row { display: grid; grid-template-columns: 48px 1fr auto; align-items: center; gap: 10px; padding: 12px 14px; }
+  .tl-icon { font-size: 18px; text-align: center; }
+  .tl-gen-id { font-size: 11px; font-weight: 700; text-align: center; }
+  .tl-tagline { font-size: 13px; font-weight: 700; color: #6b6b66; }
+  .tl-tagline.open { color: #1a1a18; }
+  .tl-years { font-size: 10px; color: #9ca3af; white-space: nowrap; }
+  .tl-speed-bar-track { height: 3px; background: #e2e2de; border-radius: 2px; overflow: hidden; margin-top: 5px; }
+  .tl-speed-bar-fill { height: 100%; border-radius: 2px; }
+  .tl-speed { font-size: 12px; font-weight: 700; text-align: right; }
+  .tl-latency { font-size: 10px; color: #9ca3af; text-align: right; margin-top: 2px; }
+  .tl-expanded { display: none; padding: 14px 14px 18px; }
+  .tl-gen-card.open .tl-expanded { display: block; }
+  .tl-stat-row { display: flex; gap: 10px; margin-bottom: 14px; }
+  .tl-stat-box { flex: 1; padding: 9px 12px; border-radius: 6px; }
+  .tl-stat-label { font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 3px; }
+  .tl-stat-value { font-size: 16px; font-weight: 700; color: #1a1a18; }
+  .tl-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .tl-col-head { font-size: 8px; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 8px; }
+  .tl-list-item { font-size: 11px; color: #6b6b66; padding: 3px 0; border-bottom: 1px solid #e2e2de; display: flex; gap: 5px; align-items: flex-start; }
+  .tl-arrow { font-size: 8px; margin-top: 3px; flex-shrink: 0; }
+  .tl-co-panel { border-radius: 6px; border: 1px solid #e2e2de; overflow: hidden; }
+  .tl-co-header { padding: 8px 12px; background: #f0f0ee; border-bottom: 1px solid #e2e2de; }
+  .tl-co-title { font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase; }
+  .tl-co-sub { font-size: 10px; color: #9ca3af; margin-top: 2px; }
+  .tl-co-row { padding: 6px 12px; border-bottom: 1px solid #f0f0ee; background: #ffffff; }
+  .tl-co-name { font-size: 11px; font-weight: 700; color: #1a1a18; }
+  .tl-co-note { font-size: 10px; color: #9ca3af; margin-top: 1px; line-height: 1.3; }
+  .tl-co-name-row { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+  .tl-cat-badge { font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px; letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; flex-shrink: 0; }
+  .tl-timeline-bar { padding-top: 10px; border-top: 1px solid #e2e2de; }
+  .tl-timeline-label { font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase; color: #9ca3af; margin-bottom: 7px; }
+  .tl-timeline-row { display: flex; align-items: center; gap: 10px; }
+  .tl-timeline-year { font-size: 11px; min-width: 32px; }
+  .tl-timeline-track { flex: 1; position: relative; height: 5px; }
+  .tl-timeline-bg { position: absolute; inset: 0; background: #e2e2de; border-radius: 3px; }
+  .tl-timeline-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 40%; border-radius: 3px; }
+  .tl-timeline-dot { position: absolute; left: 40%; top: 50%; transform: translate(-50%,-50%); width: 9px; height: 9px; border-radius: 50%; border: 2px solid #ffffff; }
+  .tl-timeline-end { font-size: 10px; color: #6b6b66; min-width: 108px; text-align: right; }
+  .tl-timeline-note { margin-top: 5px; font-size: 10px; color: #9ca3af; font-style: italic; }
+  .tl-footer { margin: 16px 16px 28px; padding: 14px; border-radius: 8px; border: 1px solid #e2e2de; background: #f9f9f7; }
+  .tl-footer-title { font-size: 8px; letter-spacing: 0.25em; text-transform: uppercase; color: #9ca3af; margin-bottom: 12px; }
+  .tl-bar-chart { display: flex; align-items: flex-end; height: 48px; gap: 3px; }
+  .tl-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; }
+  .tl-bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 3px; }
+  .tl-bar-labels { display: flex; margin-top: 5px; }
+  .tl-bar-label { flex: 1; text-align: center; font-size: 10px; font-weight: 700; }
+  .tl-cat-legend { margin-top: 14px; padding-top: 12px; border-top: 1px solid #e2e2de; }
+  .tl-cat-legend-title { font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase; color: #9ca3af; margin-bottom: 8px; }
+  .tl-cat-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tl-footer-note { margin-top: 10px; font-size: 10px; color: #9ca3af; text-align: center; font-style: italic; }
+  @media (max-width: 600px) { .tl-2col { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -200,14 +275,13 @@
     <button class="active" onclick="showPage('dashboard', this)">Dashboard</button>
     <button onclick="showPage('strategy', this)">Strategy</button>
     <button onclick="showPage('rebalancer', this)">Rebalancer</button>
-    <button onclick="showPage('groups', this)">Groups</button>
+    <button onclick="showPage('timeline', this)">📡 5G Timeline</button>
+    <button onclick="showPage('groups', this)" style="display:none" id="nav-groups-btn">Groups</button>
   </nav>
   <div class="header-right">
     <button class="api-key-btn" id="hide-btn" onclick="toggleHide()" title="Hide values">👁 Hide Values</button>
-    <button class="api-key-btn" onclick="exportJSON()">↓ Export</button>
-    <button class="api-key-btn" onclick="document.getElementById('import-file').click()">↑ Import</button>
+    <button class="api-key-btn" onclick="openSettingsModal()">⚙ Settings</button>
     <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(event)">
-    <button class="api-key-btn" onclick="openApiModal()">⚙ API Key</button>
   </div>
 </header>
 
@@ -257,7 +331,6 @@
         </div>
       </div>
       <div class="toolbar-actions">
-        <button class="btn btn-secondary" onclick="exportCSV()">↓ Export CSV</button>
         <button class="btn btn-primary" onclick="openAddModal()">+ Add Stock</button>
       </div>
     </div>
@@ -334,6 +407,34 @@
   <div id="strategy-watch-wrap" style="display:none">
     <div class="table-wrap">
       <div id="watchlist-table-wrap"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════ 5G TIMELINE ═══════════════════ -->
+<div class="page" id="page-timeline">
+  <div class="tl-wrap">
+    <div class="tl-header">
+      <div class="tl-eyebrow">Mobile Network History · 1979 – 2035</div>
+      <h1 class="tl-h1">From Voice to Ambient Intelligence</h1>
+      <p class="tl-sub">Each generation didn't just bring faster speed — it unlocked an entirely new category of human experience. Click any generation to explore.</p>
+    </div>
+    <div class="tl-legend">
+      <span class="tl-legend-label">Speed (log scale)</span>
+      <div class="tl-legend-bar"></div>
+      <span class="tl-legend-label">2 kbps → 1 Tbps</span>
+    </div>
+    <div class="tl-cards" id="tl-cards"></div>
+    <div class="tl-footer">
+      <div class="tl-footer-title">Speed Growth · 1G → 6G (log scale)</div>
+      <div class="tl-bar-chart" id="tl-bar-chart"></div>
+      <div class="tl-bar-labels" id="tl-bar-labels"></div>
+      <div class="tl-cat-legend">
+        <div class="tl-cat-legend-title">⛏️ Infrastructure Categories</div>
+        <div class="tl-cat-badges" id="tl-cat-badges"></div>
+      </div>
+      <div class="tl-footer-note">Speed has multiplied ~500,000,000× across six generations — from 2 kbps to 1 Tbps</div>
     </div>
   </div>
 </div>
@@ -429,6 +530,73 @@
   </div>
 </div>
 
+<!-- Settings -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal">
+    <h3>Settings</h3>
+
+    <div style="display:flex;flex-direction:column;gap:10px;">
+
+      <!-- API Key -->
+      <button class="settings-row" onclick="closeModal('settings-modal');openApiModal()">
+        <span class="settings-icon">🔑</span>
+        <div class="settings-label">
+          <div class="settings-title">Finnhub API Key</div>
+          <div class="settings-sub">Set your key to enable live prices</div>
+        </div>
+        <span class="settings-chevron">›</span>
+      </button>
+
+      <!-- Groups -->
+      <button class="settings-row" onclick="openGroupsFromSettings()">
+        <span class="settings-icon">🗂️</span>
+        <div class="settings-label">
+          <div class="settings-title">Manage Groups</div>
+          <div class="settings-sub">Create, edit, and delete strategy groups</div>
+        </div>
+        <span class="settings-chevron">›</span>
+      </button>
+
+      <div style="border-top:1px solid var(--border);margin:4px 0"></div>
+
+      <!-- Export JSON -->
+      <button class="settings-row" onclick="exportJSON()">
+        <span class="settings-icon">↓</span>
+        <div class="settings-label">
+          <div class="settings-title">Export Backup</div>
+          <div class="settings-sub">Download full portfolio as JSON</div>
+        </div>
+        <span class="settings-chevron">›</span>
+      </button>
+
+      <!-- Import JSON -->
+      <button class="settings-row" onclick="document.getElementById('import-file').click()">
+        <span class="settings-icon">↑</span>
+        <div class="settings-label">
+          <div class="settings-title">Import Backup</div>
+          <div class="settings-sub">Restore portfolio from a JSON file</div>
+        </div>
+        <span class="settings-chevron">›</span>
+      </button>
+
+      <!-- Export CSV -->
+      <button class="settings-row" onclick="exportCSV()">
+        <span class="settings-icon">📊</span>
+        <div class="settings-label">
+          <div class="settings-title">Export CSV</div>
+          <div class="settings-sub">Download holdings as a spreadsheet</div>
+        </div>
+        <span class="settings-chevron">›</span>
+      </button>
+
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('settings-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- API Key -->
 <div class="modal-overlay" id="api-modal">
   <div class="modal">
@@ -506,6 +674,7 @@ function showPage(name, btn) {
   if (name === 'groups') renderGroupsPage();
   if (name === 'strategy') renderStrategyPage();
   if (name === 'rebalancer') renderRebalancer();
+  if (name === 'timeline') renderTimeline();
 }
 
 // ═══════════════════════════════════════
@@ -591,6 +760,15 @@ function applyHide() {
       el.classList.toggle('blurred', valuesHidden);
     }
   });
+}
+
+function openSettingsModal() {
+  document.getElementById('settings-modal').classList.add('open');
+}
+
+function openGroupsFromSettings() {
+  closeModal('settings-modal');
+  document.getElementById('nav-groups-btn').click();
 }
 
 function openApiModal() {
@@ -1479,6 +1657,144 @@ function fmt(n) {
     document.getElementById('market-note').textContent = 'live via Finnhub';
   }
 })();
+
+// ═══════════════════════════════════════
+//  5G TIMELINE
+// ═══════════════════════════════════════
+const TL_GENERATIONS = [
+  {
+    id:'1G', tagline:'The Age of Voice', icon:'📞', future:false,
+    years:{launch:1979,mainstream:1985}, speed:'~2 kbps', latency:'~500 ms', speedVal:0.002,
+    color:'#C0392B', accent:'#E74C3C',
+    tech:['Analog AMPS/NMT','FDMA channel separation','No encryption'],
+    experience:['First calls away from a landline','Heavy brick phones, short battery','Voice only — no data whatsoever','Poor quality, frequent dropped calls'],
+    enabledCos:[{name:'Motorola',note:'DynaTAC — the original brick phone'},{name:'Nokia',note:'Early handset pioneer'},{name:'AT&T / Bell',note:'Operated AMPS consumer network'},{name:'NTT (Japan)',note:'World first 1G network (1979)'},{name:'Vodafone',note:'First UK commercial mobile call'}],
+    picksCos:[{name:'Motorola',note:'RF transceivers & base stations',cat:'Networking'},{name:'Ericsson',note:'Cell tower infrastructure',cat:'Networking'},{name:'Intel',note:'Early processor chips for handsets',cat:'Compute'},{name:'Sanyo / Energizer',note:'NiCad handset batteries',cat:'Energy'},{name:'AT&T Bell Labs',note:'Cellular spectrum R&D',cat:'Transmission'},{name:'Corning',note:'Early fiber optic backbone cable',cat:'Transmission'}],
+  },
+  {
+    id:'2G', tagline:'The Age of Text', icon:'💬', future:false,
+    years:{launch:1991,mainstream:1996}, speed:'~64 kbps', latency:'~300 ms', speedVal:0.064,
+    color:'#E67E22', accent:'#F39C12',
+    tech:['Digital GSM / CDMA','SIM cards introduced','GPRS / EDGE data'],
+    experience:['SMS & MMS messaging revolution','Caller ID & voicemail','Basic WAP web browsing','Mass mobile adoption globally'],
+    enabledCos:[{name:'Nokia',note:'Dominated handset market (3310 era)'},{name:'BlackBerry',note:'Push email for enterprise'},{name:'T-Mobile',note:'Consumer GSM carrier'},{name:'Danger / Sidekick',note:'Teen texting device pioneer'},{name:'ICQ / AIM',note:'Early mobile messaging apps'},{name:'Reuters / Bloomberg',note:'Mobile news & data feeds'}],
+    picksCos:[{name:'Qualcomm',note:'CDMA chipsets & licensing',cat:'Compute'},{name:'Ericsson',note:'GSM base station rollout',cat:'Networking'},{name:'Nokia Siemens',note:'Core network switching',cat:'Networking'},{name:'Infineon',note:'Baseband modem chips',cat:'Compute'},{name:'Samsung SDI',note:'Li-ion handset batteries',cat:'Energy'},{name:'Gemalto',note:'SIM card manufacturing',cat:'Storage'},{name:'Cisco',note:'Backhaul routing hardware',cat:'Networking'}],
+  },
+  {
+    id:'3G', tagline:'The Age of Mobile Web', icon:'🌐', future:false,
+    years:{launch:2001,mainstream:2007}, speed:'~2 Mbps', latency:'~100 ms', speedVal:2,
+    color:'#2980B9', accent:'#3498DB',
+    tech:['WCDMA / CDMA2000','HSPA packet data','IP-based network'],
+    experience:['Original iPhone launched (2007)','Email & Google Maps on the go','Video calling via Skype','Early app stores & downloads'],
+    enabledCos:[{name:'Apple',note:'iPhone defined the smartphone era'},{name:'Google',note:'Maps, Search & Android OS'},{name:'Facebook',note:'Mobile social networking'},{name:'Skype',note:'Mobile video calling'},{name:'Pandora',note:'Mobile music streaming pioneer'},{name:'HTC',note:'First major Android handsets'},{name:'YouTube',note:'Mobile video consumption'}],
+    picksCos:[{name:'Qualcomm',note:'Snapdragon mobile SoC',cat:'Compute'},{name:'ARM Holdings',note:'CPU architecture for mobile',cat:'Compute'},{name:'Ericsson / Nokia',note:'HSPA radio access networks',cat:'Networking'},{name:'Samsung',note:'NAND flash storage chips',cat:'Storage'},{name:'Corning',note:'Gorilla Glass for touchscreens',cat:'Transmission'},{name:'Akamai',note:'CDN for mobile content delivery',cat:'Networking'},{name:'TSMC',note:'Semiconductor fabrication',cat:'Compute'}],
+  },
+  {
+    id:'4G', tagline:'The App Economy Era', icon:'📱', future:false,
+    years:{launch:2009,mainstream:2013}, speed:'~100 Mbps', latency:'~30 ms', speedVal:100,
+    color:'#27AE60', accent:'#2ECC71',
+    tech:['LTE / LTE-A standard','OFDM + MIMO antennas','All-IP architecture'],
+    experience:['HD video streaming (Netflix, YouTube)','Ride-sharing & food delivery apps','FaceTime & HD video calls','Cloud storage & mobile gaming'],
+    enabledCos:[{name:'Netflix',note:'Mobile HD video streaming'},{name:'Uber / Lyft',note:'Real-time GPS ride-hailing'},{name:'Instagram',note:'Photo & video sharing at scale'},{name:'Spotify',note:'On-demand music streaming'},{name:'DoorDash',note:'Real-time food delivery'},{name:'Airbnb',note:'Mobile-first travel marketplace'},{name:'Snapchat',note:'Ephemeral video & stories'},{name:'WhatsApp',note:'Free global messaging & calls'},{name:'Zoom',note:'Consumer video conferencing'}],
+    picksCos:[{name:'Ericsson / Nokia',note:'LTE eNodeB radio towers',cat:'Networking'},{name:'Qualcomm',note:'LTE modem chips (Gobi series)',cat:'Compute'},{name:'AWS / Azure',note:'Cloud compute & storage backend',cat:'Compute'},{name:'Crown Castle',note:'Tower leasing infrastructure',cat:'Networking'},{name:'Micron / SK Hynix',note:'LPDDR mobile DRAM',cat:'Memory'},{name:'Western Digital',note:'Flash storage for data centers',cat:'Storage'},{name:'Ciena',note:'Optical fiber backhaul upgrades',cat:'Transmission'},{name:'Broadcom',note:'LTE baseband & Wi-Fi chips',cat:'Compute'}],
+  },
+  {
+    id:'5G', tagline:'The Age of Hyperconnectivity', icon:'🏙️', future:false,
+    years:{launch:2019,mainstream:2023}, speed:'~10 Gbps', latency:'~1 ms', speedVal:10000,
+    color:'#8E44AD', accent:'#9B59B6',
+    tech:['mmWave spectrum','Massive MIMO arrays','Network slicing'],
+    experience:['Fixed wireless home broadband','Smart factories & industrial IoT','Cloud gaming & AR/VR','Autonomous & connected vehicles'],
+    enabledCos:[{name:'NVIDIA',note:'AI inference at 5G edge'},{name:'Tesla / Waymo',note:'Connected autonomous vehicles'},{name:'Microsoft HoloLens',note:'Enterprise AR on 5G'},{name:'T-Mobile Home Internet',note:'Fixed wireless broadband'},{name:'Matterport',note:'3D scanning & digital twins'},{name:'Fetch Robotics',note:'Warehouse automation via 5G'},{name:'Verizon Business',note:'Private 5G for factories'},{name:'Nvidia GeForce NOW',note:'Cloud gaming streaming'}],
+    picksCos:[{name:'Ericsson',note:'5G NR massive MIMO radio units',cat:'Networking'},{name:'Qualcomm',note:'Snapdragon X65 5G modem',cat:'Compute'},{name:'TSMC',note:'5nm chips for 5G devices',cat:'Compute'},{name:'Samsung',note:'5G RAN + LPDDR5 memory',cat:'Memory'},{name:'AWS Wavelength',note:'Edge cloud on 5G nodes',cat:'Compute'},{name:'American Tower',note:'Small cell & macro tower leasing',cat:'Networking'},{name:'Infinera',note:'High-capacity optical backhaul',cat:'Transmission'},{name:'Generac / Bloom Energy',note:'Backup power for dense small cells',cat:'Energy'},{name:'Marvell Technology',note:'5G baseband silicon',cat:'Compute'}],
+  },
+  {
+    id:'6G', tagline:'The Age of Ambient Intelligence', icon:'🔮', future:true,
+    years:{launch:2030,mainstream:2033}, speed:'~1 Tbps (proj.)', latency:'<0.1 ms (proj.)', speedVal:1000000,
+    color:'#16A085', accent:'#1ABC9C',
+    tech:['Terahertz (THz) spectrum','AI-native network intelligence','Integrated sensing & comms'],
+    experience:['Holographic telepresence','Digital twins of physical world','Remote surgery in real-time','Environmental sensing (air, climate)'],
+    enabledCos:[{name:'Meta',note:'Holographic AR / metaverse'},{name:'Apple',note:'Next-gen spatial computing'},{name:'Intuitive Surgical',note:'Remote robotic surgery'},{name:'Siemens',note:'Industrial digital twins'},{name:'DeepMind / OpenAI',note:'AI-native app experiences'},{name:'John Deere',note:'AI precision agriculture'},{name:'Boston Dynamics',note:'Fully networked robotics'},{name:'Neuralink',note:'Brain-computer interfaces'}],
+    picksCos:[{name:'Samsung',note:'Leading THz hardware R&D',cat:'Networking'},{name:'Nokia Bell Labs',note:'THz spectrum research & RAN',cat:'Networking'},{name:'TSMC / Intel Foundry',note:'Sub-2nm chips for THz modems',cat:'Compute'},{name:'Nvidia',note:'AI-native network management chips',cat:'Compute'},{name:'Micron',note:'HBM4 memory for edge AI',cat:'Memory'},{name:'SpaceX Starlink',note:'Integrated satellite backhaul',cat:'Transmission'},{name:'Lumen Technologies',note:'Ultra-low latency fiber backbone',cat:'Transmission'},{name:'QuantumScape',note:'Next-gen solid-state cell power',cat:'Energy'},{name:'Keysight',note:'THz spectrum test & measurement',cat:'Networking'}],
+  },
+];
+
+const TL_CAT_COLORS = {
+  Networking:   {bg:'#eff6ff',text:'#2563eb'},
+  Compute:      {bg:'#f0fdf4',text:'#16a34a'},
+  Storage:      {bg:'#fef9c3',text:'#854d0e'},
+  Memory:       {bg:'#faf5ff',text:'#7c3aed'},
+  Transmission: {bg:'#ecfdf5',text:'#0f766e'},
+  Energy:       {bg:'#fef2f2',text:'#dc2626'},
+};
+
+function catBadgeHTML(cat) {
+  const c = TL_CAT_COLORS[cat] || {bg:'#f0f0ee',text:'#6b6b66'};
+  return `<span class="tl-cat-badge" style="background:${c.bg};color:${c.text}">${cat}</span>`;
+}
+
+function renderTimeline() {
+  const container = document.getElementById('tl-cards');
+  const logMax = Math.log10(1000000);
+  container.innerHTML = TL_GENERATIONS.map((gen, i) => {
+    const barPct = Math.max(2, (Math.log10(gen.speedVal) / logMax) * 100);
+    const techItems = gen.tech.map(t => `<div class="tl-list-item"><span class="tl-arrow" style="color:${gen.accent}">▸</span><span>${t}</span></div>`).join('');
+    const expItems  = gen.experience.map(e => `<div class="tl-list-item"><span class="tl-arrow" style="color:${gen.accent}">▸</span><span>${e}</span></div>`).join('');
+    const enabledRows = gen.enabledCos.map(c => `<div class="tl-co-row"><div class="tl-co-name">${c.name}</div><div class="tl-co-note">${c.note}</div></div>`).join('');
+    const picksRows   = gen.picksCos.map(c => `<div class="tl-co-row"><div class="tl-co-name-row"><span class="tl-co-name">${c.name}</span>${catBadgeHTML(c.cat)}</div><div class="tl-co-note">${c.note}</div></div>`).join('');
+    const yearGap = gen.years.mainstream - gen.years.launch;
+    return `
+    <div class="tl-gen-card" id="tl-card-${i}" onclick="tlToggle(${i})">
+      <div class="tl-card-row">
+        <div><div class="tl-icon">${gen.icon}</div><div class="tl-gen-id" style="color:${gen.accent}">${gen.id}</div></div>
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:5px">
+            <span class="tl-tagline" id="tl-tagline-${i}">${gen.tagline}</span>
+            <span class="tl-years">${gen.years.launch}–${gen.years.mainstream}${gen.future?' (proj.)':''}</span>
+          </div>
+          <div class="tl-speed-bar-track"><div class="tl-speed-bar-fill" style="width:${barPct}%;background:linear-gradient(90deg,${gen.color},${gen.accent})"></div></div>
+        </div>
+        <div><div class="tl-speed" style="color:${gen.accent}">${gen.speed}</div><div class="tl-latency">${gen.latency}</div></div>
+      </div>
+      <div class="tl-expanded" id="tl-exp-${i}" style="border-top:1px solid ${gen.color}40">
+        <div class="tl-stat-row">
+          <div class="tl-stat-box" style="background:${gen.color}15;border:1px solid ${gen.color}30"><div class="tl-stat-label" style="color:${gen.accent}">Peak Speed</div><div class="tl-stat-value">${gen.speed}</div></div>
+          <div class="tl-stat-box" style="background:${gen.color}15;border:1px solid ${gen.color}30"><div class="tl-stat-label" style="color:${gen.accent}">Latency</div><div class="tl-stat-value">${gen.latency}</div></div>
+        </div>
+        <div class="tl-2col">
+          <div><div class="tl-col-head" style="color:${gen.accent}">Key Technologies</div>${techItems}</div>
+          <div><div class="tl-col-head" style="color:${gen.accent}">User Experience</div>${expItems}</div>
+        </div>
+        <div class="tl-2col">
+          <div class="tl-co-panel"><div class="tl-co-header"><div class="tl-co-title" style="color:${gen.accent}">🚀 Products & Experiences Enabled</div><div class="tl-co-sub">Built on top of ${gen.id}</div></div>${enabledRows}</div>
+          <div class="tl-co-panel"><div class="tl-co-header"><div class="tl-co-title" style="color:${gen.accent}">⛏️ Picks & Shovels</div><div class="tl-co-sub">Infrastructure that made ${gen.id} possible</div></div>${picksRows}</div>
+        </div>
+        <div class="tl-timeline-bar">
+          <div class="tl-timeline-label">Adoption Timeline</div>
+          <div class="tl-timeline-row">
+            <div class="tl-timeline-year" style="color:${gen.accent}">${gen.years.launch}</div>
+            <div class="tl-timeline-track"><div class="tl-timeline-bg"></div><div class="tl-timeline-fill" style="background:linear-gradient(90deg,${gen.color}80,${gen.accent})"></div><div class="tl-timeline-dot" style="background:${gen.accent}"></div></div>
+            <div class="tl-timeline-end">Mainstream: ${gen.years.mainstream}${gen.future?' (est.)':''}</div>
+          </div>
+          <div class="tl-timeline-note">~${yearGap} years from launch to mainstream adoption</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const barChart  = document.getElementById('tl-bar-chart');
+  const barLabels = document.getElementById('tl-bar-labels');
+  barChart.innerHTML  = TL_GENERATIONS.map(gen => { const h=Math.max(3,(Math.log10(gen.speedVal)/logMax)*100); return `<div class="tl-bar-col"><div class="tl-bar" style="height:${h}%;background:linear-gradient(180deg,${gen.accent},${gen.color});opacity:${gen.future?0.5:1}"></div></div>`; }).join('');
+  barLabels.innerHTML = TL_GENERATIONS.map(gen => `<div class="tl-bar-label" style="color:${gen.accent}">${gen.id}</div>`).join('');
+  document.getElementById('tl-cat-badges').innerHTML = Object.entries(TL_CAT_COLORS).map(([cat,c]) => `<span class="tl-cat-badge" style="background:${c.bg};color:${c.text}">${cat}</span>`).join('');
+}
+
+function tlToggle(i) {
+  const card=document.getElementById('tl-card-'+i); const exp=document.getElementById('tl-exp-'+i); const tag=document.getElementById('tl-tagline-'+i);
+  const isOpen=card.classList.contains('open');
+  TL_GENERATIONS.forEach((_,j)=>{ document.getElementById('tl-card-'+j).classList.remove('open'); document.getElementById('tl-exp-'+j).style.display='none'; document.getElementById('tl-tagline-'+j).classList.remove('open'); document.getElementById('tl-card-'+j).style.borderColor='#e2e2de'; });
+  if(!isOpen){ card.classList.add('open'); card.style.borderColor=TL_GENERATIONS[i].accent; exp.style.display='block'; tag.classList.add('open'); }
+}
+
 </script>
 </body>
 </html>
