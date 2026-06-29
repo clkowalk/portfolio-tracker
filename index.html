@@ -897,6 +897,7 @@ async function refreshPrices() {
   if (!holdings.length) return;
   setStatus('loading', 'Fetching prices…');
   await Promise.all(holdings.map(fetchPrice));
+  await Promise.all(holdings.map(fetchHoldingInsights));
   save();
   renderDashboard();
   const t = new Date().toLocaleTimeString();
@@ -1567,14 +1568,15 @@ function toggleWatchRebal(ticker, checked) {
 function exportCSV() {
   if (!holdings.length) return;
   const totalValue = totalPortfolioValue();
-  let csv = 'Ticker,Group,Shares,Avg Cost,Current Price,Market Value,$ Gain,% Gain,% Portfolio\n';
+  let csv = 'Ticker,Name,Group,Shares,Avg Cost,Current Price,Market Value,$ Gain,% Gain,% Portfolio\n';
   [...holdings].sort((a,b) => a.ticker.localeCompare(b.ticker)).forEach(h => {
     const price = h.currentPrice || h.cost;
     const mktVal = price * h.shares;
     const gain = (price - h.cost) * h.shares;
     const gainPct = ((price - h.cost) / h.cost * 100).toFixed(2);
     const pct = totalValue ? (mktVal / totalValue * 100).toFixed(1) : 0;
-    csv += `${h.ticker},${groupName(h.groupId)},${h.shares},${h.cost},${price},${mktVal.toFixed(2)},${gain.toFixed(2)},${gainPct}%,${pct}%\n`;
+    const name = (h.companyName || '').replace(/,/g, ' ');
+    csv += `${h.ticker},${name},${groupName(h.groupId)},${h.shares},${h.cost},${price},${mktVal.toFixed(2)},${gain.toFixed(2)},${gainPct}%,${pct}%\n`;
   });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
@@ -1637,6 +1639,7 @@ function fmt(n) {
   if (apiKey && holdings.length) {
     setStatus('loading', 'Fetching prices…');
     await Promise.all(holdings.map(fetchPrice));
+    await Promise.all(holdings.map(fetchHoldingInsights));
     save();
     renderDashboard();
     const t = new Date().toLocaleTimeString();
