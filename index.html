@@ -767,7 +767,7 @@
     </p>
     <div class="form-group">
       <label>API Key</label>
-      <input type="password" id="input-fmp-key" placeholder="your_fmp_key_here">
+      <input type="text" id="input-fmp-key" placeholder="your_fmp_key_here">
     </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('fmp-modal')">Cancel</button>
@@ -2353,13 +2353,13 @@ function clearAllAnalyses() {
 let fmpKey = localStorage.getItem('pt_fmp_key') || '';
 
 function openFmpModal() {
-  document.getElementById('input-fmp-key').value = fmpKey ? '••••••••' : '';
+  document.getElementById('input-fmp-key').value = fmpKey || '';
   document.getElementById('fmp-modal').classList.add('open');
 }
 
 function saveFmpKey() {
   const val = document.getElementById('input-fmp-key').value.trim();
-  if (val && val !== '••••••••') {
+  if (val) {
     fmpKey = val;
     localStorage.setItem('pt_fmp_key', fmpKey);
   }
