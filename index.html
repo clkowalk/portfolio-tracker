@@ -579,13 +579,13 @@
         <div class="research-card-body">
           <!-- Auto-fetch row -->
           <div style="background:var(--accent-light);border:1px solid #bfdbfe;border-radius:8px;padding:14px 16px;margin-bottom:16px;">
-            <div style="font-size:11px;font-weight:600;color:var(--accent);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.4px;">⚡ Auto-fetch from FMP</div>
+            <div style="font-size:11px;font-weight:600;color:var(--accent);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.4px;">⚡ Auto-fetch from Alpha Vantage</div>
             <div class="etf-input-row">
               <input type="text" id="etf-name-input" placeholder="ETF ticker (e.g. VGT)" style="text-transform:uppercase;width:180px">
               <input type="date" id="etf-date-input" style="width:160px">
               <button class="btn btn-primary" onclick="fetchETFHoldings()">Fetch Holdings →</button>
             </div>
-            <div id="etf-fetch-status" style="font-size:11px;color:var(--muted);margin-top:6px;">Requires FMP API key — set in ⚙ Settings</div>
+            <div id="etf-fetch-status" style="font-size:11px;color:var(--muted);margin-top:6px;">Requires Alpha Vantage API key — set in ⚙ Settings</div>
           </div>
 
           <!-- Manual entry -->
@@ -761,13 +761,13 @@
 <!-- FMP API Key -->
 <div class="modal-overlay" id="fmp-modal">
   <div class="modal">
-    <h3>FMP API Key</h3>
+    <h3>Alpha Vantage API Key</h3>
     <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6;">
-      Get a free key at <a href="https://financialmodelingprep.com" target="_blank" style="color:var(--accent)">financialmodelingprep.com</a> — sign up takes ~2 minutes, no credit card required. Free tier: 250 calls/day.
+      Get a free key at <a href="https://www.alphavantage.co/support/#api-key" target="_blank" style="color:var(--accent)">alphavantage.co</a> — instant, no credit card required. Free tier: 25 calls/day.
     </p>
     <div class="form-group">
       <label>API Key</label>
-      <input type="text" id="input-fmp-key" placeholder="your_fmp_key_here">
+      <input type="text" id="input-fmp-key" placeholder="your_alphavantage_key_here">
     </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('fmp-modal')">Cancel</button>
@@ -790,8 +790,8 @@
       <button class="settings-row" onclick="closeModal('settings-modal');openFmpModal()">
         <span class="settings-icon">📦</span>
         <div class="settings-label">
-          <div class="settings-title">FMP API Key</div>
-          <div class="settings-sub">Financial Modeling Prep — for ETF holdings data</div>
+          <div class="settings-title">Alpha Vantage API Key</div>
+          <div class="settings-sub">Free ETF holdings data — alphavantage.co</div>
         </div>
         <span class="settings-chevron">›</span>
       </button>
@@ -2350,7 +2350,7 @@ function clearAllAnalyses() {
 
 
 // ── FMP API ──
-let fmpKey = localStorage.getItem('pt_fmp_key') || '';
+let fmpKey = localStorage.getItem('pt_av_key') || localStorage.getItem('pt_fmp_key') || '';
 
 function openFmpModal() {
   document.getElementById('input-fmp-key').value = fmpKey || '';
@@ -2361,7 +2361,7 @@ function saveFmpKey() {
   const val = document.getElementById('input-fmp-key').value.trim();
   if (val) {
     fmpKey = val;
-    localStorage.setItem('pt_fmp_key', fmpKey);
+    localStorage.setItem('pt_av_key', fmpKey);
   }
   closeModal('fmp-modal');
   showToast('FMP API key saved');
@@ -2374,59 +2374,51 @@ async function fetchETFHoldings() {
 
   if (!ticker) { showToast('Enter an ETF ticker first'); return; }
   if (!fmpKey) {
-    showToast('Set your FMP API key in ⚙ Settings first');
-    status.textContent = '⚠ No FMP API key set — go to ⚙ Settings';
+    showToast('Set your Alpha Vantage API key in ⚙ Settings first');
+    status.textContent = '⚠ No Alpha Vantage API key set — go to ⚙ Settings';
     status.style.color = 'var(--red)';
     return;
   }
 
-  status.innerHTML = '<span class="spinner-inline"></span> Fetching holdings from FMP…';
+  status.innerHTML = '<span class="spinner-inline"></span> Fetching ETF holdings from Alpha Vantage…';
   status.style.color = 'var(--muted)';
 
   try {
-    // Try the stable endpoint first, fall back to v3 legacy
-    let data = null;
-    let usedEndpoint = '';
+    const res  = await fetch(`https://www.alphavantage.co/query?function=ETF_PROFILE&symbol=${ticker}&apikey=${fmpKey}`);
+    const data = await res.json();
 
-    // Stable endpoint (newer, preferred)
-    const stableRes = await fetch(`https://financialmodelingprep.com/stable/etf/holdings?symbol=${ticker}&apikey=${fmpKey}`);
-    const stableData = await stableRes.json();
-
-    if (Array.isArray(stableData) && stableData.length) {
-      data = stableData;
-      usedEndpoint = 'stable';
-    } else {
-      // Fall back to v3 legacy endpoint
-      const v3Res  = await fetch(`https://financialmodelingprep.com/api/v3/etf-holder/${ticker}?apikey=${fmpKey}`);
-      const v3Data = await v3Res.json();
-      if (Array.isArray(v3Data) && v3Data.length) {
-        data = v3Data;
-        usedEndpoint = 'v3';
-      }
-    }
-
-    if (!data || !data.length) {
-      status.textContent = `⚠ No holdings found for ${ticker}. Check the ticker or your FMP API key.`;
+    // Check for API limit or error messages
+    if (data['Note'] || data['Information']) {
+      status.textContent = `⚠ API limit reached or key issue: ${data['Note'] || data['Information']}`;
       status.style.color = 'var(--red)';
       return;
     }
 
-    // Normalise field names — stable uses 'weightPercentage', v3 also uses 'weightPercentage'
-    // but ticker field differs: stable='symbol', v3='asset'
-    const top10 = data
+    // Alpha Vantage ETF_PROFILE returns holdings under data.holdings array
+    // Each holding: { symbol, description, weight }
+    // weight is a string like "0.2219" (decimal, not percent)
+    const rawHoldings = data.holdings || data['holdings'] || [];
+
+    if (!rawHoldings.length) {
+      status.textContent = `⚠ No holdings found for ${ticker}. Check the ticker or try a major US ETF (SPY, QQQ, VGT).`;
+      status.style.color = 'var(--red)';
+      return;
+    }
+
+    const top10 = rawHoldings
       .map(h => {
-        const sym = h.symbol || h.asset || '';
-        const rawW = parseFloat(h.weightPercentage) || 0;
-        // FMP sometimes returns decimal (0.22) sometimes percent (22.0) — normalise
-        const weight = rawW > 0 && rawW < 1 ? rawW * 100 : rawW;
-        return { ticker: sym.toUpperCase(), weight };
+        const sym = (h.symbol || h.ticker || '').toUpperCase();
+        const rawW = parseFloat(h.weight) || 0;
+        // AV returns weight as decimal e.g. 0.2219 = 22.19%
+        const weight = rawW < 1 ? rawW * 100 : rawW;
+        return { ticker: sym, weight };
       })
       .filter(h => h.ticker && h.weight > 0)
       .sort((a,b) => b.weight - a.weight)
       .slice(0, 10);
 
     if (!top10.length) {
-      status.textContent = `⚠ Holdings found but weights were missing or zero. Try another ETF.`;
+      status.textContent = `⚠ Holdings found but could not parse weights. Try another ETF.`;
       status.style.color = 'var(--red)';
       return;
     }
@@ -2445,7 +2437,7 @@ async function fetchETFHoldings() {
     showToast(`✓ ${ticker} snapshot saved — ${top10.length} holdings`);
 
   } catch(e) {
-    status.textContent = `⚠ Error: ${e.message}. Check your FMP API key in ⚙ Settings.`;
+    status.textContent = `⚠ Error: ${e.message}. Check your Alpha Vantage API key in ⚙ Settings.`;
     status.style.color = 'var(--red)';
   }
 }
