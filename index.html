@@ -200,6 +200,63 @@
     .rebal-side { position: static; }
   }
 
+
+  /* ══════════════════════════════════════
+     RESEARCH PAGE
+  ══════════════════════════════════════ */
+  .research-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .research-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .research-card-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .research-card-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .research-card-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .research-card-body { padding: 20px; }
+  .ticker-input-row { display: flex; gap: 8px; margin-bottom: 16px; }
+  .ticker-input-row input { flex: 1; padding: 9px 12px; border: 1px solid var(--border); border-radius: 7px; font-size: 14px; font-family: var(--font); outline: none; transition: border 0.15s; background: var(--surface); color: var(--text); text-transform: uppercase; }
+  .ticker-input-row input:focus { border-color: var(--accent); }
+  .analysis-output { font-size: 13px; line-height: 1.7; color: var(--text); min-height: 120px; }
+  .analysis-output h4 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent); margin: 14px 0 6px; }
+  .analysis-output p { margin-bottom: 8px; color: var(--muted); }
+  .analysis-output ul { padding-left: 16px; margin-bottom: 8px; }
+  .analysis-output li { color: var(--muted); margin-bottom: 3px; }
+  .analysis-output strong { color: var(--text); }
+  .analysis-placeholder { text-align: center; padding: 32px 20px; color: var(--muted); font-size: 13px; }
+  .analysis-placeholder .big { font-size: 28px; margin-bottom: 10px; }
+  .saved-analyses { border-top: 1px solid var(--border); margin-top: 16px; }
+  .saved-analysis-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; border-bottom: 1px solid var(--border); font-size: 12px; cursor: pointer; transition: background 0.1s; }
+  .saved-analysis-item:hover { background: var(--bg); }
+  .saved-analysis-item:last-child { border-bottom: none; }
+  .etf-input-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+  .etf-input-row input { padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; font-family: var(--font); outline: none; transition: border 0.15s; background: var(--surface); color: var(--text); }
+  .etf-input-row input:focus { border-color: var(--accent); }
+  .etf-holdings-input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 7px; font-size: 12px; font-family: var(--mono); outline: none; resize: vertical; min-height: 140px; transition: border 0.15s; background: var(--surface); color: var(--text); }
+  .etf-holdings-input:focus { border-color: var(--accent); }
+  .etf-section { margin-bottom: 28px; }
+  .etf-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .etf-section-name { font-size: 14px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .etf-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+  .etf-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .etf-table th { padding: 8px 14px; background: var(--surface2); border-bottom: 1px solid var(--border); font-size: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+  .etf-table th.date-col { text-align: center; min-width: 90px; }
+  .etf-table td { padding: 8px 14px; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 12px; }
+  .etf-table tr:last-child td { border-bottom: none; }
+  .etf-table tr:hover td { background: var(--bg); }
+  .etf-table td.ticker-col { font-weight: 700; color: var(--accent); white-space: nowrap; }
+  .etf-table td.weight-col { text-align: center; }
+  .etf-table td.empty-col { text-align: center; color: var(--border); }
+  .weight-up { color: var(--green); }
+  .weight-down { color: var(--red); }
+  .weight-new { color: var(--accent); font-size: 10px; }
+  .notepad-area { width: 100%; padding: 14px; border: 1px solid var(--border); border-radius: 7px; font-size: 13px; font-family: var(--font); outline: none; resize: vertical; min-height: 280px; line-height: 1.7; transition: border 0.15s; background: var(--surface); color: var(--text); }
+  .notepad-area:focus { border-color: var(--accent); }
+  .note-list-item { display: flex; align-items: center; justify-content: space-between; padding: 9px 16px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 13px; transition: background 0.1s; }
+  .note-list-item:hover { background: var(--bg); }
+  .note-list-item.active { background: var(--accent-light); }
+  .note-list-item:last-child { border-bottom: none; }
+  .note-title-input { width: 100%; padding: 8px 0; border: none; border-bottom: 2px solid var(--border); font-size: 15px; font-weight: 600; font-family: var(--font); outline: none; background: transparent; color: var(--text); margin-bottom: 14px; transition: border 0.15s; }
+  .note-title-input:focus { border-bottom-color: var(--accent); }
+  .spinner-inline { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (max-width: 900px) { .research-layout { grid-template-columns: 1fr; } }
   /* ══════════════════════════════════════
      5G TIMELINE PAGE
   ══════════════════════════════════════ */
@@ -270,6 +327,7 @@
   <nav>
     <button class="active" onclick="showPage('dashboard', this)">Dashboard</button>
     <button onclick="showPage('research', this)">Market Research</button>
+    <button onclick="showPage('stockresearch', this)">Research</button>
     <button onclick="showPage('strategy', this)">Strategy</button>
     <button onclick="showPage('groups', this)" style="display:none" id="nav-groups-btn">Groups</button>
   </nav>
@@ -447,6 +505,132 @@
 
 </div>
 
+<!-- ═══════════════════ RESEARCH ═══════════════════ -->
+<div class="page" id="page-stockresearch">
+  <div style="padding:32px;max-width:1280px;margin:0 auto">
+
+    <!-- Sub-tabs -->
+    <div style="margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+      <div>
+        <h2 style="font-size:18px;font-weight:600;margin-bottom:4px;">Research</h2>
+        <p style="font-size:13px;color:var(--muted);">Stock analysis, ETF tracking, and personal notes.</p>
+      </div>
+      <div class="view-toggle">
+        <button class="active" id="rsch-btn-stock" onclick="setResearchSubTab('stock')">📊 Stock Analysis</button>
+        <button id="rsch-btn-etf" onclick="setResearchSubTab('etf')">📦 ETF Tracker</button>
+        <button id="rsch-btn-notes" onclick="setResearchSubTab('notes')">📝 Notepad</button>
+      </div>
+    </div>
+
+    <!-- ── STOCK ANALYSIS ── -->
+    <div id="rsch-stock">
+      <div class="research-layout">
+        <!-- Left: input + output -->
+        <div>
+          <div class="research-card" style="margin-bottom:16px;">
+            <div class="research-card-header">
+              <div>
+                <div class="research-card-title">Stock Analysis</div>
+                <div class="research-card-sub">Powered by Finnhub + Claude AI</div>
+              </div>
+            </div>
+            <div class="research-card-body">
+              <div class="ticker-input-row">
+                <input type="text" id="rsch-ticker-input" placeholder="Enter ticker e.g. AAPL" maxlength="10">
+                <button class="btn btn-primary" onclick="runStockAnalysis()">Analyze →</button>
+              </div>
+              <div id="rsch-analysis-output">
+                <div class="analysis-placeholder">
+                  <div class="big">🔍</div>
+                  <p>Enter a ticker and click Analyze to generate a company overview, SWOT analysis, and sentiment summary.</p>
+                  <p style="margin-top:8px;font-size:11px;">Requires Finnhub API key + Anthropic API key (set in ⚙ Settings)</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Right: saved analyses -->
+        <div>
+          <div class="research-card">
+            <div class="research-card-header">
+              <div class="research-card-title">Saved Analyses</div>
+              <button class="btn-danger" onclick="clearAllAnalyses()" style="font-size:11px">Clear all</button>
+            </div>
+            <div id="rsch-saved-list">
+              <div class="analysis-placeholder"><div class="big">📁</div><p>No analyses saved yet.</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ETF TRACKER ── -->
+    <div id="rsch-etf" style="display:none">
+
+      <!-- Add snapshot card -->
+      <div class="research-card" style="margin-bottom:24px;">
+        <div class="research-card-header">
+          <div>
+            <div class="research-card-title">Add ETF Snapshot</div>
+            <div class="research-card-sub">Auto-fetch holdings via FMP API, or paste manually</div>
+          </div>
+          <button class="btn btn-secondary" onclick="clearETF()" style="font-size:11px">Clear all data</button>
+        </div>
+        <div class="research-card-body">
+          <!-- Auto-fetch row -->
+          <div style="background:var(--accent-light);border:1px solid #bfdbfe;border-radius:8px;padding:14px 16px;margin-bottom:16px;">
+            <div style="font-size:11px;font-weight:600;color:var(--accent);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.4px;">⚡ Auto-fetch from FMP</div>
+            <div class="etf-input-row">
+              <input type="text" id="etf-name-input" placeholder="ETF ticker (e.g. VGT)" style="text-transform:uppercase;width:180px">
+              <input type="date" id="etf-date-input" style="width:160px">
+              <button class="btn btn-primary" onclick="fetchETFHoldings()">Fetch Holdings →</button>
+            </div>
+            <div id="etf-fetch-status" style="font-size:11px;color:var(--muted);margin-top:6px;">Requires FMP API key — set in ⚙ Settings</div>
+          </div>
+
+          <!-- Manual entry -->
+          <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px;">Or paste manually — TICKER, Weight% per line</div>
+          <textarea class="etf-holdings-input" id="etf-holdings-input" placeholder="AAPL, 22.5&#10;MSFT, 18.3&#10;NVDA, 14.1&#10;AVGO, 6.8&#10;ORCL, 5.2&#10;AMAT, 4.1&#10;AMD, 3.8&#10;QCOM, 3.2&#10;NOW, 2.9&#10;PANW, 2.7"></textarea>
+          <button class="btn btn-secondary" style="margin-top:10px;width:100%" onclick="saveETFSnapshot()">Save Manual Snapshot</button>
+        </div>
+      </div>
+
+      <!-- Tables per ETF -->
+      <div id="etf-snapshots-wrap">
+        <div class="analysis-placeholder"><div class="big">📦</div><p>No snapshots yet. Add one above.</p></div>
+      </div>
+
+    </div>
+
+    <!-- ── NOTEPAD ── -->
+    <div id="rsch-notes" style="display:none">
+      <div class="research-layout">
+        <!-- Left: note list -->
+        <div style="max-width:280px">
+          <div class="research-card">
+            <div class="research-card-header">
+              <div class="research-card-title">Notes</div>
+              <button class="btn btn-primary" style="padding:5px 12px;font-size:12px" onclick="createNote()">+ New</button>
+            </div>
+            <div id="note-list" style="max-height:520px;overflow-y:auto;">
+              <div class="analysis-placeholder"><div class="big">📝</div><p>No notes yet.</p></div>
+            </div>
+          </div>
+        </div>
+        <!-- Right: editor -->
+        <div>
+          <div class="research-card" style="height:100%">
+            <div class="research-card-body" id="note-editor-wrap">
+              <div class="analysis-placeholder"><div class="big">✏️</div><p>Select a note or create a new one.</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <!-- ═══════════════════ MODALS ═══════════════════ -->
 
 <!-- Add Stock -->
@@ -545,12 +729,69 @@
 
     <div style="display:flex;flex-direction:column;gap:10px;">
 
-      <!-- API Key -->
+      <!-- Anthropic API Key -->
+      <button class="settings-row" onclick="closeModal('settings-modal');openAnthropicModal()">
+        <span class="settings-icon">🤖</span>
+        <div class="settings-label">
+          <div class="settings-title">Anthropic API Key</div>
+          <div class="settings-sub">Required for Stock Analysis AI features</div>
+        </div>
+        <span class="settings-chevron">›</span>
+      </button>
+
+      <!-- Anthropic API Key -->
+<div class="modal-overlay" id="anthropic-modal">
+  <div class="modal">
+    <h3>Anthropic API Key</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6;">
+      Get a key at <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent)">console.anthropic.com</a>. Used only for AI stock analysis — never sent anywhere except Anthropic's API.
+    </p>
+    <div class="form-group">
+      <label>API Key</label>
+      <input type="password" id="input-anthropic-key" placeholder="sk-ant-...">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('anthropic-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAnthropicKey()">Save</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- FMP API Key -->
+<div class="modal-overlay" id="fmp-modal">
+  <div class="modal">
+    <h3>FMP API Key</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6;">
+      Get a free key at <a href="https://financialmodelingprep.com" target="_blank" style="color:var(--accent)">financialmodelingprep.com</a> — sign up takes ~2 minutes, no credit card required. Free tier: 250 calls/day.
+    </p>
+    <div class="form-group">
+      <label>API Key</label>
+      <input type="password" id="input-fmp-key" placeholder="your_fmp_key_here">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('fmp-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveFmpKey()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- API Key -->
       <button class="settings-row" onclick="closeModal('settings-modal');openApiModal()">
         <span class="settings-icon">🔑</span>
         <div class="settings-label">
           <div class="settings-title">Finnhub API Key</div>
           <div class="settings-sub">Set your key to enable live prices</div>
+        </div>
+        <span class="settings-chevron">›</span>
+      </button>
+
+      <!-- FMP API Key -->
+      <button class="settings-row" onclick="closeModal('settings-modal');openFmpModal()">
+        <span class="settings-icon">📦</span>
+        <div class="settings-label">
+          <div class="settings-title">FMP API Key</div>
+          <div class="settings-sub">Financial Modeling Prep — for ETF holdings data</div>
         </div>
         <span class="settings-chevron">›</span>
       </button>
@@ -601,6 +842,24 @@
 
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('settings-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Anthropic API Key -->
+<div class="modal-overlay" id="anthropic-modal">
+  <div class="modal">
+    <h3>Anthropic API Key</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6;">
+      Get a key at <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent)">console.anthropic.com</a>. Used only for AI stock analysis — never sent anywhere except Anthropic's API.
+    </p>
+    <div class="form-group">
+      <label>API Key</label>
+      <input type="password" id="input-anthropic-key" placeholder="sk-ant-...">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('anthropic-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAnthropicKey()">Save</button>
     </div>
   </div>
 </div>
@@ -681,6 +940,7 @@ function showPage(name, btn) {
   btn.classList.add('active');
   if (name === 'groups') renderGroupsPage();
   if (name === 'strategy') renderStrategyPage();
+  if (name === 'stockresearch') initResearchPage();
 
   if (name === 'research') initResearchPage();
 }
@@ -1613,7 +1873,7 @@ function exportCSV() {
 //  EXPORT / IMPORT JSON
 // ═══════════════════════════════════════
 function exportJSON() {
-  const backup = { version: 2, exportedAt: new Date().toISOString(), holdings, groups, watchlist, stockOverrides, watchlistInRebal };
+  const backup = { version: 3, exportedAt: new Date().toISOString(), holdings, groups, watchlist, stockOverrides, watchlistInRebal, savedAnalyses, etfSnapshots, notes };
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }));
   a.download = `portfolio-backup-${new Date().toISOString().slice(0,10)}.json`;
@@ -1633,6 +1893,9 @@ function importJSON(event) {
       watchlist = data.watchlist || [];
       stockOverrides = data.stockOverrides || {};
       watchlistInRebal = data.watchlistInRebal || {};
+      savedAnalyses = data.savedAnalyses || [];
+      etfSnapshots = data.etfSnapshots || [];
+      notes = data.notes || [];
       groupTargets = {};
       save();
       renderDashboard();
@@ -1880,6 +2143,430 @@ function showToast(msg) {
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+
+// ═══════════════════════════════════════
+//  RESEARCH PAGE
+// ═══════════════════════════════════════
+let anthropicKey = localStorage.getItem('pt_anthropic_key') || '';
+let savedAnalyses = JSON.parse(localStorage.getItem('pt_analyses') || '[]');
+let etfSnapshots  = JSON.parse(localStorage.getItem('pt_etf_snapshots') || '[]');
+let notes         = JSON.parse(localStorage.getItem('pt_notes') || '[]');
+let activeNoteId  = null;
+let researchSubTab = 'stock';
+
+function saveResearchData() {
+  localStorage.setItem('pt_analyses',     JSON.stringify(savedAnalyses));
+  localStorage.setItem('pt_etf_snapshots',JSON.stringify(etfSnapshots));
+  localStorage.setItem('pt_notes',        JSON.stringify(notes));
+}
+
+function openAnthropicModal() {
+  document.getElementById('input-anthropic-key').value = anthropicKey ? '••••••••' : '';
+  document.getElementById('anthropic-modal').classList.add('open');
+}
+
+function saveAnthropicKey() {
+  const val = document.getElementById('input-anthropic-key').value.trim();
+  if (val && val !== '••••••••') {
+    anthropicKey = val;
+    localStorage.setItem('pt_anthropic_key', anthropicKey);
+  }
+  closeModal('anthropic-modal');
+  showToast('Anthropic API key saved');
+}
+
+function initResearchPage() {
+  setResearchSubTab(researchSubTab);
+}
+
+function setResearchSubTab(tab) {
+  researchSubTab = tab;
+  ['stock','etf','notes'].forEach(t => {
+    document.getElementById('rsch-btn-' + (t === 'notes' ? 'notes' : t)).classList.toggle('active', t === tab);
+    document.getElementById('rsch-' + (t === 'notes' ? 'notes' : t)).style.display = t === tab ? '' : 'none';
+  });
+  if (tab === 'notes')  renderNoteList();
+  if (tab === 'etf')    renderETFSnapshots();
+  if (tab === 'stock')  renderSavedAnalyses();
+}
+
+// ── STOCK ANALYSIS ──
+async function runStockAnalysis() {
+  const ticker = document.getElementById('rsch-ticker-input').value.trim().toUpperCase();
+  if (!ticker) return;
+  if (!apiKey) { showToast('Set your Finnhub API key in ⚙ Settings first'); return; }
+  if (!anthropicKey) { showToast('Set your Anthropic API key in ⚙ Settings first'); return; }
+
+  const out = document.getElementById('rsch-analysis-output');
+  out.innerHTML = '<div style="padding:32px;text-align:center;color:var(--muted)"><span class="spinner-inline"></span> Fetching data & generating analysis…</div>';
+
+  try {
+    // Fetch profile, quote, recommendations, news from Finnhub
+    const [profRes, quoteRes, recRes, newsRes] = await Promise.all([
+      fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${apiKey}`),
+      fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${apiKey}`),
+      fetch(`https://finnhub.io/api/v1/stock/recommendation?symbol=${ticker}&token=${apiKey}`),
+      fetch(`https://finnhub.io/api/v1/company-news?symbol=${ticker}&from=${daysAgo(30)}&to=${daysAgo(0)}&token=${apiKey}`)
+    ]);
+    const prof  = await profRes.json();
+    const quote = await quoteRes.json();
+    const recs  = await recRes.json();
+    const news  = await newsRes.json();
+
+    if (!prof.name) { out.innerHTML = `<div class="analysis-placeholder"><div class="big">⚠️</div><p>Ticker not found. Check the symbol and try again.</p></div>`; return; }
+
+    // Build prompt for Claude
+    const latestRec = recs && recs[0] ? recs[0] : null;
+    const topNews = (news || []).slice(0, 5).map(n => `• ${n.headline}`).join('\n');
+    const prompt = `You are a financial research analyst. Based on the following data, write a structured company analysis report.
+
+Company: ${prof.name} (${ticker})
+Sector: ${prof.finnhubIndustry || 'N/A'}
+Market Cap: $${prof.marketCapitalization ? (prof.marketCapitalization * 1e6 / 1e9).toFixed(1) + 'B' : 'N/A'}
+Current Price: $${quote.c || 'N/A'}
+52wk High: $${quote.h || 'N/A'} | 52wk Low: $${quote.l || 'N/A'}
+Analyst Consensus (latest): ${latestRec ? `Buy:${latestRec.buy} Hold:${latestRec.hold} Sell:${latestRec.sell} StrongBuy:${latestRec.strongBuy}` : 'N/A'}
+Recent Headlines:
+${topNews || 'No recent news available'}
+
+Write a structured analysis with these exact sections:
+1. Business Overview (2-3 sentences on what the company does)
+2. SWOT Analysis (bullet points for Strengths, Weaknesses, Opportunities, Threats — 2-3 each)
+3. Analyst Sentiment (interpret the recommendation data)
+4. Key Risks (2-3 bullet points)
+5. One-line Verdict
+
+Be concise, specific, and data-informed. Format in clean markdown with ## headers.`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': anthropicKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error?.message || 'API error');
+    const markdown = data.content[0].text;
+
+    // Save analysis
+    const analysis = { ticker, name: prof.name, date: new Date().toISOString(), markdown, price: quote.c, marketCap: prof.marketCapitalization };
+    savedAnalyses = savedAnalyses.filter(a => a.ticker !== ticker); // replace if exists
+    savedAnalyses.unshift(analysis);
+    saveResearchData();
+
+    renderAnalysis(analysis);
+    renderSavedAnalyses();
+  } catch(e) {
+    out.innerHTML = `<div class="analysis-placeholder"><div class="big">⚠️</div><p>Error: ${e.message}</p></div>`;
+  }
+}
+
+function daysAgo(n) {
+  const d = new Date(); d.setDate(d.getDate() - n);
+  return d.toISOString().slice(0,10);
+}
+
+function renderAnalysis(a) {
+  const out = document.getElementById('rsch-analysis-output');
+  // Convert simple markdown to HTML
+  let html = a.markdown
+    .replace(/^## (.+)$/gm, '<h4>$1</h4>')
+    .replace(/^### (.+)$/gm, '<h4>$1</h4>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^\* (.+)$/gm, '<li>$1</li>')
+    .replace(/^• (.+)$/gm, '<li>$1</li>')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/g, s => `<ul>${s}</ul>`)
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/^(?!<[hup])/gm, '');
+  out.innerHTML = `
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px;">
+      <div>
+        <span class="ticker-badge">${a.ticker}</span>
+        <span style="font-size:12px;color:var(--muted);margin-left:8px">${a.name}</span>
+      </div>
+      <span style="font-size:11px;color:var(--muted)">${new Date(a.date).toLocaleDateString()}</span>
+    </div>
+    <div class="analysis-output">${html}</div>`;
+}
+
+function renderSavedAnalyses() {
+  const wrap = document.getElementById('rsch-saved-list');
+  if (!savedAnalyses.length) {
+    wrap.innerHTML = '<div class="analysis-placeholder"><div class="big">📁</div><p>No analyses saved yet.</p></div>';
+    return;
+  }
+  wrap.innerHTML = '<div class="saved-analyses">' + savedAnalyses.map(a => `
+    <div class="saved-analysis-item" onclick="renderAnalysis(${JSON.stringify(a).replace(/"/g,'&quot;')})">
+      <div>
+        <span class="ticker-badge">${a.ticker}</span>
+        <span style="font-size:12px;color:var(--muted);margin-left:6px">${a.name}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:11px;color:var(--muted)">${new Date(a.date).toLocaleDateString()}</span>
+        <button class="btn-danger" style="font-size:11px;padding:2px 6px" onclick="event.stopPropagation();deleteAnalysis('${a.ticker}')">✕</button>
+      </div>
+    </div>`).join('') + '</div>';
+}
+
+function deleteAnalysis(ticker) {
+  savedAnalyses = savedAnalyses.filter(a => a.ticker !== ticker);
+  saveResearchData(); renderSavedAnalyses();
+}
+
+function clearAllAnalyses() {
+  savedAnalyses = []; saveResearchData(); renderSavedAnalyses();
+  document.getElementById('rsch-analysis-output').innerHTML = '<div class="analysis-placeholder"><div class="big">🔍</div><p>Enter a ticker and click Analyze.</p></div>';
+}
+
+
+// ── FMP API ──
+let fmpKey = localStorage.getItem('pt_fmp_key') || '';
+
+function openFmpModal() {
+  document.getElementById('input-fmp-key').value = fmpKey ? '••••••••' : '';
+  document.getElementById('fmp-modal').classList.add('open');
+}
+
+function saveFmpKey() {
+  const val = document.getElementById('input-fmp-key').value.trim();
+  if (val && val !== '••••••••') {
+    fmpKey = val;
+    localStorage.setItem('pt_fmp_key', fmpKey);
+  }
+  closeModal('fmp-modal');
+  showToast('FMP API key saved');
+}
+
+async function fetchETFHoldings() {
+  const ticker = document.getElementById('etf-name-input').value.trim().toUpperCase();
+  const date   = document.getElementById('etf-date-input').value || new Date().toISOString().slice(0,10);
+  const status = document.getElementById('etf-fetch-status');
+
+  if (!ticker) { showToast('Enter an ETF ticker first'); return; }
+  if (!fmpKey) {
+    showToast('Set your FMP API key in ⚙ Settings first');
+    status.textContent = '⚠ No FMP API key set — go to ⚙ Settings';
+    status.style.color = 'var(--red)';
+    return;
+  }
+
+  status.innerHTML = '<span class="spinner-inline"></span> Fetching holdings from FMP…';
+  status.style.color = 'var(--muted)';
+
+  try {
+    const res  = await fetch(`https://financialmodelingprep.com/api/v3/etf-holder/${ticker}?apikey=${fmpKey}`);
+    const data = await res.json();
+
+    if (!Array.isArray(data) || !data.length) {
+      status.textContent = `⚠ No holdings found for ${ticker}. Check the ticker or your API key.`;
+      status.style.color = 'var(--red)';
+      return;
+    }
+
+    // FMP returns weightPercentage as a decimal (0.22 = 22%) or sometimes as a percent already
+    // Normalise: if max weight > 5, assume it's already in percent form
+    const weights = data.map(h => parseFloat(h.weightPercentage) || 0);
+    const maxW = Math.max(...weights);
+    const scale = maxW > 5 ? 1 : 100; // if max < 5, multiply by 100
+
+    // Take top 10 by weight, sorted descending
+    const top10 = data
+      .map(h => ({ ticker: h.asset, weight: (parseFloat(h.weightPercentage) || 0) * scale }))
+      .filter(h => h.ticker && h.weight > 0)
+      .sort((a,b) => b.weight - a.weight)
+      .slice(0, 10);
+
+    // Populate the manual textarea as preview
+    document.getElementById('etf-holdings-input').value = top10.map(h => `${h.ticker}, ${h.weight.toFixed(2)}`).join('\n');
+
+    // Auto-save
+    etfSnapshots = etfSnapshots.filter(s => !(s.name === ticker && s.date === date));
+    etfSnapshots.push({ id: 'etf_' + Date.now(), name: ticker, date, holdings: top10 });
+    saveResearchData();
+    renderETFSnapshots();
+
+    status.textContent = `✓ Fetched ${top10.length} holdings for ${ticker} — snapshot saved for ${date}`;
+    status.style.color = 'var(--green)';
+    showToast(`✓ ${ticker} holdings fetched and saved`);
+
+  } catch(e) {
+    status.textContent = `⚠ Error: ${e.message}`;
+    status.style.color = 'var(--red)';
+  }
+}
+
+// ── ETF TRACKER ──
+function saveETFSnapshot() {
+  const name = document.getElementById('etf-name-input').value.trim().toUpperCase();
+  const date = document.getElementById('etf-date-input').value || new Date().toISOString().slice(0,10);
+  const raw  = document.getElementById('etf-holdings-input').value.trim();
+  if (!name || !raw) { showToast('Enter ETF name and holdings'); return; }
+
+  const holdings = raw.split('\n').map(line => {
+    const parts = line.split(',');
+    return { ticker: parts[0]?.trim().toUpperCase(), weight: parseFloat(parts[1]) || 0 };
+  }).filter(h => h.ticker && h.weight > 0);
+
+  if (!holdings.length) { showToast('No valid holdings found. Format: TICKER, Weight%'); return; }
+
+  // Remove existing snapshot for same ETF + date and replace
+  etfSnapshots = etfSnapshots.filter(s => !(s.name === name && s.date === date));
+  etfSnapshots.push({ id: 'etf_' + Date.now(), name, date, holdings });
+  saveResearchData();
+  renderETFSnapshots();
+  document.getElementById('etf-holdings-input').value = '';
+  showToast(`Saved ${name} snapshot (${date}) — ${holdings.length} holdings`);
+}
+
+function clearETF() {
+  etfSnapshots = [];
+  saveResearchData();
+  renderETFSnapshots();
+  showToast('All ETF snapshots cleared');
+}
+
+function deleteETFSnapshot(id) {
+  etfSnapshots = etfSnapshots.filter(s => s.id !== id);
+  saveResearchData();
+  renderETFSnapshots();
+}
+
+function renderETFSnapshots() {
+  const wrap = document.getElementById('etf-snapshots-wrap');
+  if (!etfSnapshots.length) {
+    wrap.innerHTML = '<div class="analysis-placeholder"><div class="big">📦</div><p>No snapshots yet. Add one above.</p></div>';
+    return;
+  }
+
+  // Group by ETF name
+  const byName = {};
+  etfSnapshots.forEach(s => {
+    if (!byName[s.name]) byName[s.name] = [];
+    byName[s.name].push(s);
+  });
+
+  wrap.innerHTML = Object.entries(byName).map(([name, snaps]) => {
+    // Sort snapshots oldest → newest (columns)
+    const sorted = [...snaps].sort((a,b) => a.date.localeCompare(b.date));
+
+    // Build union of all tickers across all snapshots, preserving order of latest snapshot
+    const latestHoldings = sorted[sorted.length - 1].holdings.map(h => h.ticker);
+    const allTickers = [...new Set([
+      ...latestHoldings,
+      ...sorted.flatMap(s => s.holdings.map(h => h.ticker))
+    ])];
+
+    // Build table
+    const dateCols = sorted.map(s => `<th class="date-col">${s.date}<br><button class="btn-danger" style="font-size:10px;padding:1px 5px;margin-top:3px;opacity:0.6" onclick="deleteETFSnapshot('${s.id}')">✕</button></th>`).join('');
+
+    const bodyRows = allTickers.map(ticker => {
+      const cells = sorted.map((snap, i) => {
+        const curr = snap.holdings.find(h => h.ticker === ticker);
+        const prev = i > 0 ? sorted[i-1].holdings.find(h => h.ticker === ticker) : null;
+
+        if (!curr) return `<td class="weight-col empty-col">—</td>`;
+
+        let cls = 'weight-col';
+        let delta = '';
+        if (prev) {
+          const diff = curr.weight - prev.weight;
+          if (Math.abs(diff) >= 0.05) {
+            cls += diff > 0 ? ' weight-up' : ' weight-down';
+            delta = ` <span style="font-size:10px">${diff > 0 ? '▲' : '▼'}${Math.abs(diff).toFixed(1)}</span>`;
+          }
+        } else if (i > 0) {
+          // Ticker didn't exist in previous snapshots
+          cls += ' weight-new';
+          delta = ' <span style="font-size:9px">NEW</span>';
+        }
+
+        return `<td class="${cls}">${curr.weight.toFixed(1)}%${delta}</td>`;
+      }).join('');
+
+      return `<tr><td class="ticker-col">${ticker}</td>${cells}</tr>`;
+    }).join('');
+
+    return `<div class="etf-section">
+      <div class="etf-section-header">
+        <div class="etf-section-name">
+          <span class="ticker-badge">${name}</span>
+          <span style="font-size:12px;color:var(--muted)">${sorted.length} snapshot${sorted.length !== 1 ? 's' : ''} · ${allTickers.length} holdings tracked</span>
+        </div>
+      </div>
+      <div class="etf-table-wrap">
+        <table class="etf-table">
+          <thead>
+            <tr>
+              <th style="text-align:left;min-width:70px">Ticker</th>
+              ${dateCols}
+            </tr>
+          </thead>
+          <tbody>${bodyRows}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── NOTEPAD ──
+function createNote() {
+  const note = { id: 'note_' + Date.now(), title: 'New Note', body: '', created: new Date().toISOString(), updated: new Date().toISOString() };
+  notes.unshift(note);
+  saveResearchData();
+  renderNoteList();
+  openNote(note.id);
+}
+
+function openNote(id) {
+  activeNoteId = id;
+  const note = notes.find(n => n.id === id);
+  if (!note) return;
+  renderNoteList();
+  document.getElementById('note-editor-wrap').innerHTML = `
+    <input class="note-title-input" id="note-title" value="${note.title.replace(/"/g,'&quot;')}" placeholder="Note title" oninput="updateNote()">
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Created ${new Date(note.created).toLocaleDateString()} · Auto-saves as you type</div>
+    <textarea class="notepad-area" id="note-body" placeholder="Start writing…" oninput="updateNote()">${note.body}</textarea>
+    <div style="margin-top:10px;display:flex;justify-content:flex-end">
+      <button class="btn-danger" onclick="deleteNote('${id}')">Delete note</button>
+    </div>`;
+}
+
+function updateNote() {
+  const note = notes.find(n => n.id === activeNoteId);
+  if (!note) return;
+  note.title = document.getElementById('note-title').value || 'Untitled';
+  note.body  = document.getElementById('note-body').value;
+  note.updated = new Date().toISOString();
+  saveResearchData();
+  // Update list item title without re-rendering whole list
+  const item = document.querySelector(`.note-list-item[data-id="${activeNoteId}"] .note-list-title`);
+  if (item) item.textContent = note.title;
+}
+
+function deleteNote(id) {
+  notes = notes.filter(n => n.id !== id);
+  activeNoteId = null;
+  saveResearchData();
+  renderNoteList();
+  document.getElementById('note-editor-wrap').innerHTML = '<div class="analysis-placeholder"><div class="big">✏️</div><p>Select a note or create a new one.</p></div>';
+}
+
+function renderNoteList() {
+  const wrap = document.getElementById('note-list');
+  if (!notes.length) {
+    wrap.innerHTML = '<div class="analysis-placeholder"><div class="big">📝</div><p>No notes yet.</p></div>';
+    return;
+  }
+  wrap.innerHTML = notes.map(n => `
+    <div class="note-list-item ${n.id === activeNoteId ? 'active' : ''}" data-id="${n.id}" onclick="openNote('${n.id}')">
+      <div>
+        <div class="note-list-title" style="font-weight:600;font-size:13px;color:var(--text)">${n.title}</div>
+        <div style="font-size:11px;color:var(--muted)">${new Date(n.updated).toLocaleDateString()}</div>
+      </div>
+    </div>`).join('');
 }
 
 </script>
