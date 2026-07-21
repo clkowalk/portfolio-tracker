@@ -2281,15 +2281,42 @@ function renderAnalysis(a) {
     .replace(/(<li>.*<\/li>\n?)+/g, s => `<ul>${s}</ul>`)
     .replace(/\n\n/g, '</p><p>')
     .replace(/^(?!<[hup])/gm, '');
+
+  const alreadyOwned    = holdings.find(h => h.ticker === a.ticker);
+  const alreadyWatching = watchlist.find(w => w.ticker === a.ticker);
+  let watchBtn = '';
+  if (alreadyOwned) {
+    watchBtn = `<span style="font-size:11px;color:var(--green);font-weight:600">✓ In portfolio</span>`;
+  } else if (alreadyWatching) {
+    watchBtn = `<span style="font-size:11px;color:var(--accent);font-weight:600">✓ On watchlist</span>`;
+  } else {
+    watchBtn = `<button class="btn btn-secondary" style="font-size:11px;padding:4px 12px" onclick="addAnalysisToWatchlist('${a.ticker}','${(a.name||'').replace(/'/g,'')}',this)">+ Add to Watchlist</button>`;
+  }
+
   out.innerHTML = `
-    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px;">
-      <div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+      <div style="display:flex;align-items:baseline;gap:8px;">
         <span class="ticker-badge">${a.ticker}</span>
-        <span style="font-size:12px;color:var(--muted);margin-left:8px">${a.name}</span>
+        <span style="font-size:12px;color:var(--muted)">${a.name}</span>
       </div>
-      <span style="font-size:11px;color:var(--muted)">${new Date(a.date).toLocaleDateString()}</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        ${watchBtn}
+        <span style="font-size:11px;color:var(--muted)">${new Date(a.date).toLocaleDateString()}</span>
+      </div>
     </div>
     <div class="analysis-output">${html}</div>`;
+}
+
+function addAnalysisToWatchlist(ticker, name, btn) {
+  if (holdings.find(h => h.ticker === ticker)) { showToast(`${ticker} is already in your portfolio`); return; }
+  if (watchlist.find(w => w.ticker === ticker)) { showToast(`${ticker} is already on your watchlist`); return; }
+  const item = { ticker, groupId: '__ungrouped__', currentPrice: null, companyName: name || null };
+  watchlist.push(item);
+  save();
+  if (apiKey) fetchWatchPrice(item).then(() => { save(); });
+  showToast(`✓ ${ticker} added to watchlist`);
+  // Update button state
+  btn.outerHTML = `<span style="font-size:11px;color:var(--accent);font-weight:600">✓ On watchlist</span>`;
 }
 
 function renderSavedAnalyses() {
@@ -2357,43 +2384,68 @@ async function fetchETFHoldings() {
   status.style.color = 'var(--muted)';
 
   try {
-    const res  = await fetch(`https://financialmodelingprep.com/api/v3/etf-holder/${ticker}?apikey=${fmpKey}`);
-    const data = await res.json();
+    // Try the stable endpoint first, fall back to v3 legacy
+    let data = null;
+    let usedEndpoint = '';
 
-    if (!Array.isArray(data) || !data.length) {
-      status.textContent = `⚠ No holdings found for ${ticker}. Check the ticker or your API key.`;
+    // Stable endpoint (newer, preferred)
+    const stableRes = await fetch(`https://financialmodelingprep.com/stable/etf/holdings?symbol=${ticker}&apikey=${fmpKey}`);
+    const stableData = await stableRes.json();
+
+    if (Array.isArray(stableData) && stableData.length) {
+      data = stableData;
+      usedEndpoint = 'stable';
+    } else {
+      // Fall back to v3 legacy endpoint
+      const v3Res  = await fetch(`https://financialmodelingprep.com/api/v3/etf-holder/${ticker}?apikey=${fmpKey}`);
+      const v3Data = await v3Res.json();
+      if (Array.isArray(v3Data) && v3Data.length) {
+        data = v3Data;
+        usedEndpoint = 'v3';
+      }
+    }
+
+    if (!data || !data.length) {
+      status.textContent = `⚠ No holdings found for ${ticker}. Check the ticker or your FMP API key.`;
       status.style.color = 'var(--red)';
       return;
     }
 
-    // FMP returns weightPercentage as a decimal (0.22 = 22%) or sometimes as a percent already
-    // Normalise: if max weight > 5, assume it's already in percent form
-    const weights = data.map(h => parseFloat(h.weightPercentage) || 0);
-    const maxW = Math.max(...weights);
-    const scale = maxW > 5 ? 1 : 100; // if max < 5, multiply by 100
-
-    // Take top 10 by weight, sorted descending
+    // Normalise field names — stable uses 'weightPercentage', v3 also uses 'weightPercentage'
+    // but ticker field differs: stable='symbol', v3='asset'
     const top10 = data
-      .map(h => ({ ticker: h.asset, weight: (parseFloat(h.weightPercentage) || 0) * scale }))
+      .map(h => {
+        const sym = h.symbol || h.asset || '';
+        const rawW = parseFloat(h.weightPercentage) || 0;
+        // FMP sometimes returns decimal (0.22) sometimes percent (22.0) — normalise
+        const weight = rawW > 0 && rawW < 1 ? rawW * 100 : rawW;
+        return { ticker: sym.toUpperCase(), weight };
+      })
       .filter(h => h.ticker && h.weight > 0)
       .sort((a,b) => b.weight - a.weight)
       .slice(0, 10);
 
-    // Populate the manual textarea as preview
+    if (!top10.length) {
+      status.textContent = `⚠ Holdings found but weights were missing or zero. Try another ETF.`;
+      status.style.color = 'var(--red)';
+      return;
+    }
+
+    // Populate manual textarea as preview
     document.getElementById('etf-holdings-input').value = top10.map(h => `${h.ticker}, ${h.weight.toFixed(2)}`).join('\n');
 
-    // Auto-save
+    // Auto-save snapshot
     etfSnapshots = etfSnapshots.filter(s => !(s.name === ticker && s.date === date));
     etfSnapshots.push({ id: 'etf_' + Date.now(), name: ticker, date, holdings: top10 });
     saveResearchData();
     renderETFSnapshots();
 
-    status.textContent = `✓ Fetched ${top10.length} holdings for ${ticker} — snapshot saved for ${date}`;
+    status.textContent = `✓ Fetched ${top10.length} holdings for ${ticker} (${date})`;
     status.style.color = 'var(--green)';
-    showToast(`✓ ${ticker} holdings fetched and saved`);
+    showToast(`✓ ${ticker} snapshot saved — ${top10.length} holdings`);
 
   } catch(e) {
-    status.textContent = `⚠ Error: ${e.message}`;
+    status.textContent = `⚠ Error: ${e.message}. Check your FMP API key in ⚙ Settings.`;
     status.style.color = 'var(--red)';
   }
 }
