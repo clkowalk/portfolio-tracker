@@ -56,8 +56,8 @@
   .view-toggle button.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
 
   /* TABLE */
-  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: visible; }
-  .table-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--border); gap: 12px; flex-wrap: wrap; position: sticky; top: 56px; z-index: 11; background: var(--surface); border-radius: var(--radius) var(--radius) 0 0; }
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .table-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--border); gap: 12px; flex-wrap: wrap; }
   .toolbar-left { display: flex; align-items: center; gap: 12px; }
   .table-title { font-size: 13px; font-weight: 600; color: var(--text); }
   .toolbar-actions { display: flex; gap: 8px; align-items: center; }
@@ -73,8 +73,8 @@
   .btn-danger:hover { opacity: 1; background: var(--red-bg); }
 
   table { width: 100%; border-collapse: collapse; }
-  thead th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); background: var(--surface2); border-bottom: 1px solid var(--border); position: sticky; top: 105px; z-index: 10; }
-  .table-scroll { overflow-x: auto; overflow-y: visible; }
+  thead th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); background: var(--surface2); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+  .table-scroll { overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 220px); }
   thead th.num { text-align: right; }
   tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
   tbody tr:last-child { border-bottom: none; }
