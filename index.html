@@ -403,11 +403,6 @@
 
   <!-- Holdings tab -->
   <div id="dash-holdings-wrap">
-    <div class="refresh-row">
-      <span class="status-dot" id="status-dot"></span>
-      <span id="status-text">Ready</span>
-      <button class="btn btn-secondary" style="padding:5px 12px;font-size:12px" onclick="refreshPrices()">↻ Refresh Prices</button>
-    </div>
     <div class="table-wrap">
       <div class="table-toolbar">
         <div class="toolbar-left">
@@ -418,6 +413,11 @@
           </div>
         </div>
         <div class="toolbar-actions">
+          <div class="refresh-row" style="margin:0">
+            <span class="status-dot" id="status-dot"></span>
+            <span id="status-text">Ready</span>
+            <button class="btn btn-secondary" style="padding:5px 12px;font-size:12px" onclick="refreshPrices()">↻ Refresh Prices</button>
+          </div>
           <button class="btn btn-primary" onclick="openAddModal()">+ Add Stock</button>
         </div>
       </div>
@@ -2763,7 +2763,7 @@ async function fetchStockOverlayData(ticker) {
     if (candle.s === 'ok') ovCandles['1Y'] = candle;
     document.getElementById('ov-loading').style.display = 'none';
     document.getElementById('ov-content').style.display = '';
-    drawChart(candle, '1Y');
+    requestAnimationFrame(() => drawChart(candle, '1Y'));
 
   } catch(e) {
     document.getElementById('ov-loading').innerHTML = `⚠ Error: ${e.message}`;
@@ -2777,7 +2777,7 @@ async function loadChart(range) {
   ovChartRange = range;
 
   // Use cached data if available
-  if (ovCandles[range]) { drawChart(ovCandles[range], range); return; }
+  if (ovCandles[range]) { requestAnimationFrame(() => drawChart(ovCandles[range], range)); return; }
 
   document.getElementById('ov-chart-loading').style.display = 'flex';
 
@@ -2791,7 +2791,7 @@ async function loadChart(range) {
     const data = await r.json();
     if (data.s === 'ok') ovCandles[range] = data;
     document.getElementById('ov-chart-loading').style.display = 'none';
-    drawChart(data, range);
+    requestAnimationFrame(() => drawChart(data, range));
   } catch(e) {
     document.getElementById('ov-chart-loading').style.display = 'none';
   }
@@ -2801,6 +2801,9 @@ function drawChart(candle, range) {
   const canvas = document.getElementById('ov-chart');
   const ctx    = canvas.getContext('2d');
   const wrap   = canvas.parentElement;
+
+  // If the overlay hasn't painted yet, retry after a frame
+  if (!wrap.clientWidth) { requestAnimationFrame(() => drawChart(candle, range)); return; }
 
   // HiDPI
   const dpr = window.devicePixelRatio || 1;
