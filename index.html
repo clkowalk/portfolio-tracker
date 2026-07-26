@@ -257,6 +257,32 @@
   .spinner-inline { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (max-width: 900px) { .research-layout { grid-template-columns: 1fr; } }
+
+  /* ── STOCK DETAIL OVERLAY ── */
+  .stock-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:300; align-items:center; justify-content:center; padding:20px; }
+  .stock-overlay.open { display:flex; }
+  .stock-panel { background:var(--surface); border-radius:14px; width:100%; max-width:780px; max-height:90vh; overflow-y:auto; box-shadow:0 24px 64px rgba(0,0,0,0.18); display:flex; flex-direction:column; }
+  .stock-panel-header { display:flex; align-items:center; justify-content:space-between; padding:20px 24px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface); z-index:10; }
+  .stock-panel-title { display:flex; align-items:baseline; gap:10px; }
+  .stock-panel-ticker { font-size:20px; font-weight:700; color:var(--text); }
+  .stock-panel-name { font-size:13px; color:var(--muted); }
+  .stock-panel-close { width:32px; height:32px; border-radius:50%; border:1px solid var(--border); background:var(--surface2); cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; transition:all 0.15s; flex-shrink:0; }
+  .stock-panel-close:hover { background:var(--red-bg); border-color:var(--red); color:var(--red); }
+  .stock-panel-body { padding:24px; flex:1; }
+  .stock-stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:24px; }
+  .stock-stat-card { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:12px 14px; }
+  .stock-stat-label { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted); margin-bottom:5px; }
+  .stock-stat-value { font-size:15px; font-weight:700; font-family:var(--mono); color:var(--text); }
+  .stock-stat-value.green { color:var(--green); }
+  .stock-stat-value.red { color:var(--red); }
+  .stock-chart-wrap { border:1px solid var(--border); border-radius:8px; overflow:hidden; margin-bottom:20px; background:var(--surface2); }
+  .stock-chart-toolbar { display:flex; gap:4px; padding:10px 14px; border-bottom:1px solid var(--border); background:var(--surface); }
+  .chart-range-btn { background:none; border:none; padding:4px 10px; border-radius:5px; font-size:11px; font-weight:600; font-family:var(--mono); cursor:pointer; color:var(--muted); transition:all 0.15s; }
+  .chart-range-btn.active { background:var(--accent-light); color:var(--accent); }
+  .chart-range-btn:hover:not(.active) { background:var(--surface2); }
+  .chart-canvas-wrap { padding:16px; position:relative; height:220px; }
+  .chart-loading { display:flex; align-items:center; justify-content:center; height:220px; color:var(--muted); font-size:13px; }
+  @media (max-width:600px) { .stock-stats-grid { grid-template-columns:repeat(2,1fr); } }
   /* ══════════════════════════════════════
      5G TIMELINE PAGE
   ══════════════════════════════════════ */
@@ -326,9 +352,8 @@
   <div class="logo"><span class="logo-dot"></span> Portfolio</div>
   <nav>
     <button class="active" onclick="showPage('dashboard', this)">Dashboard</button>
-    <button onclick="showPage('research', this)">Market Research</button>
+    <button onclick="showPage('research', this)">Strategy</button>
     <button onclick="showPage('stockresearch', this)">Research</button>
-    <button onclick="showPage('strategy', this)">Strategy</button>
     <button onclick="showPage('groups', this)" style="display:none" id="nav-groups-btn">Groups</button>
   </nav>
   <div class="header-right">
@@ -368,72 +393,40 @@
     </div>
   </div>
 
-  <div class="refresh-row">
-    <span class="status-dot" id="status-dot"></span>
-    <span id="status-text">Ready</span>
-    <button class="btn btn-secondary" style="padding:5px 12px;font-size:12px" onclick="refreshPrices()">↻ Refresh Prices</button>
-  </div>
-
-  <div class="table-wrap">
-    <div class="table-toolbar">
-      <div class="toolbar-left">
-        <span class="table-title">Holdings</span>
-        <div class="view-toggle">
-          <button class="active" id="view-btn-all" onclick="setView('all')">All Stocks</button>
-          <button id="view-btn-group" onclick="setView('group')">By Group</button>
-        </div>
-      </div>
-      <div class="toolbar-actions">
-        <button class="btn btn-primary" onclick="openAddModal()">+ Add Stock</button>
-      </div>
-    </div>
-    <div id="holdings-table-wrap"></div>
-  </div>
-</div>
-
-<!-- ═══════════════════ GROUPS ═══════════════════ -->
-<div class="page" id="page-groups">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
-    <div>
-      <h2 style="font-size:18px;font-weight:600;margin-bottom:4px;">Groups</h2>
-      <p style="font-size:13px;color:var(--muted);">Organise your stocks into strategy buckets. Assign each stock to a group when adding it.</p>
-    </div>
-    <button class="btn btn-primary" onclick="openGroupModal()">+ New Group</button>
-  </div>
-  <div class="groups-grid" id="groups-grid"></div>
-</div>
-
-<!-- ═══════════════════ REBALANCER ═══════════════════ -->
-
-<!-- ═══════════════════ STRATEGY ═══════════════════ -->
-<div class="page" id="page-strategy">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-    <div>
-      <h2 style="font-size:18px;font-weight:600;margin-bottom:4px;">Strategy</h2>
-      <p style="font-size:13px;color:var(--muted);">Full portfolio view by group, plus your watchlist of stocks under consideration.</p>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;">
-      <button class="btn btn-secondary" onclick="refreshWatchlistPrices()">↻ Refresh</button>
-      <button class="btn btn-primary" id="strategy-add-btn" onclick="openAddWatchModal()">+ Add to Watchlist</button>
-    </div>
-  </div>
-
-  <!-- Inner tab toggle -->
+  <!-- Dashboard inner tab toggle -->
   <div style="margin-bottom:20px;">
     <div class="view-toggle">
-      <button class="active" id="strat-btn-full" onclick="setStrategyTab('full')">Full View</button>
-      <button id="strat-btn-watch" onclick="setStrategyTab('watch')">Watchlist</button>
-      <button id="strat-btn-rebal" onclick="setStrategyTab('rebal')">Rebalancer</button>
+      <button class="active" id="dash-btn-holdings" onclick="setDashTab('holdings')">Holdings</button>
+      <button id="dash-btn-rebal" onclick="setDashTab('rebal')">Rebalancer</button>
     </div>
   </div>
 
-  <div id="strategy-full-wrap"></div>
-  <div id="strategy-watch-wrap" style="display:none">
+  <!-- Holdings tab -->
+  <div id="dash-holdings-wrap">
+    <div class="refresh-row">
+      <span class="status-dot" id="status-dot"></span>
+      <span id="status-text">Ready</span>
+      <button class="btn btn-secondary" style="padding:5px 12px;font-size:12px" onclick="refreshPrices()">↻ Refresh Prices</button>
+    </div>
     <div class="table-wrap">
-      <div id="watchlist-table-wrap"></div>
+      <div class="table-toolbar">
+        <div class="toolbar-left">
+          <span class="table-title">Holdings</span>
+          <div class="view-toggle">
+            <button class="active" id="view-btn-all" onclick="setView('all')">All Stocks</button>
+            <button id="view-btn-group" onclick="setView('group')">By Group</button>
+          </div>
+        </div>
+        <div class="toolbar-actions">
+          <button class="btn btn-primary" onclick="openAddModal()">+ Add Stock</button>
+        </div>
+      </div>
+      <div id="holdings-table-wrap"></div>
     </div>
   </div>
-  <div id="strategy-rebal-wrap" style="display:none">
+
+  <!-- Rebalancer tab -->
+  <div id="dash-rebal-wrap" style="display:none">
     <div class="rebal-layout">
       <div>
         <div class="section-title">
@@ -462,7 +455,22 @@
       </div>
     </div>
   </div>
+
 </div>
+
+<!-- ═══════════════════ GROUPS ═══════════════════ -->
+<div class="page" id="page-groups">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+    <div>
+      <h2 style="font-size:18px;font-weight:600;margin-bottom:4px;">Groups</h2>
+      <p style="font-size:13px;color:var(--muted);">Organise your stocks into strategy buckets. Assign each stock to a group when adding it.</p>
+    </div>
+    <button class="btn btn-primary" onclick="openGroupModal()">+ New Group</button>
+  </div>
+  <div class="groups-grid" id="groups-grid"></div>
+</div>
+
+<!-- ═══════════════════ REBALANCER ═══════════════════ -->
 
 
 <!-- ═══════════════════ 5G TIMELINE ═══════════════════ -->
@@ -513,17 +521,37 @@
     <div style="margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
       <div>
         <h2 style="font-size:18px;font-weight:600;margin-bottom:4px;">Research</h2>
-        <p style="font-size:13px;color:var(--muted);">Stock analysis, ETF tracking, and personal notes.</p>
+        <p style="font-size:13px;color:var(--muted);">Portfolio strategy, stock analysis, ETF tracking, and notes.</p>
       </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-secondary" id="rsch-refresh-btn" onclick="refreshWatchlistPrices()" style="display:none;font-size:11px;">↻ Refresh</button>
+        <button class="btn btn-primary" id="rsch-add-watch-btn" onclick="openAddWatchModal()" style="display:none;font-size:11px;">+ Add to Watchlist</button>
+      </div>
+    </div>
+    <div style="margin-bottom:20px;">
       <div class="view-toggle">
-        <button class="active" id="rsch-btn-stock" onclick="setResearchSubTab('stock')">📊 Stock Analysis</button>
+        <button class="active" id="rsch-btn-full" onclick="setResearchSubTab('full')">Full View</button>
+        <button id="rsch-btn-watch" onclick="setResearchSubTab('watch')">Watchlist</button>
+        <button id="rsch-btn-stock" onclick="setResearchSubTab('stock')">📊 Stock Analysis</button>
         <button id="rsch-btn-etf" onclick="setResearchSubTab('etf')">📦 ETF Tracker</button>
         <button id="rsch-btn-notes" onclick="setResearchSubTab('notes')">📝 Notepad</button>
       </div>
     </div>
 
+    <!-- ── FULL VIEW ── -->
+    <div id="rsch-full">
+      <div id="rsch-full-inner"></div>
+    </div>
+
+    <!-- ── WATCHLIST ── -->
+    <div id="rsch-watch" style="display:none">
+      <div class="table-wrap">
+        <div id="watchlist-table-wrap"></div>
+      </div>
+    </div>
+
     <!-- ── STOCK ANALYSIS ── -->
-    <div id="rsch-stock">
+    <div id="rsch-stock" style="display:none">
       <div class="research-layout">
         <!-- Left: input + output -->
         <div>
@@ -628,6 +656,41 @@
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- ═══════════════════ STOCK DETAIL OVERLAY ═══════════════════ -->
+<div class="stock-overlay" id="stock-overlay" onclick="if(event.target===this)closeStockOverlay()">
+  <div class="stock-panel">
+    <div class="stock-panel-header">
+      <div class="stock-panel-title">
+        <span class="stock-panel-ticker" id="ov-ticker"></span>
+        <span class="stock-panel-name" id="ov-name"></span>
+      </div>
+      <button class="stock-panel-close" onclick="closeStockOverlay()">✕</button>
+    </div>
+    <div class="stock-panel-body">
+      <div id="ov-loading" class="chart-loading"><span class="spinner-inline"></span> Loading…</div>
+      <div id="ov-content" style="display:none">
+        <!-- Stats grid -->
+        <div class="stock-stats-grid" id="ov-stats"></div>
+        <!-- Price chart -->
+        <div class="stock-chart-wrap">
+          <div class="stock-chart-toolbar" id="ov-chart-toolbar">
+            <button class="chart-range-btn" onclick="loadChart('1M')">1M</button>
+            <button class="chart-range-btn" onclick="loadChart('3M')">3M</button>
+            <button class="chart-range-btn" onclick="loadChart('6M')">6M</button>
+            <button class="chart-range-btn active" onclick="loadChart('1Y')">1Y</button>
+            <button class="chart-range-btn" onclick="loadChart('3Y')">3Y</button>
+            <button class="chart-range-btn" onclick="loadChart('5Y')">5Y</button>
+          </div>
+          <div class="chart-canvas-wrap">
+            <canvas id="ov-chart" style="width:100%;height:100%"></canvas>
+            <div id="ov-chart-loading" class="chart-loading" style="position:absolute;inset:0;background:var(--surface2);display:none"><span class="spinner-inline"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -939,10 +1002,25 @@ function showPage(name, btn) {
   document.getElementById('page-' + name).classList.add('active');
   btn.classList.add('active');
   if (name === 'groups') renderGroupsPage();
-  if (name === 'strategy') renderStrategyPage();
   if (name === 'stockresearch') initResearchPage();
+  if (name === 'dashboard') { setDashTab(dashTab); }
 
   if (name === 'research') initResearchPage();
+}
+
+
+// ═══════════════════════════════════════
+//  DASHBOARD TABS
+// ═══════════════════════════════════════
+let dashTab = 'holdings';
+
+function setDashTab(tab) {
+  dashTab = tab;
+  document.getElementById('dash-btn-holdings').classList.toggle('active', tab === 'holdings');
+  document.getElementById('dash-btn-rebal').classList.toggle('active', tab === 'rebal');
+  document.getElementById('dash-holdings-wrap').style.display = tab === 'holdings' ? '' : 'none';
+  document.getElementById('dash-rebal-wrap').style.display   = tab === 'rebal'    ? '' : 'none';
+  if (tab === 'rebal') renderRebalancer();
 }
 
 // ═══════════════════════════════════════
@@ -1565,7 +1643,8 @@ async function addToWatchlist() {
   save();
   closeModal('add-watch-modal');
   if (apiKey) { await fetchWatchPrice(item); save(); }
-  renderStrategyPage();
+  renderWatchlistTab();
+  renderFullView();
 }
 
 async function fetchWatchPrice(item) {
@@ -1645,7 +1724,8 @@ function removeWatchItem(ticker) {
   watchlist = watchlist.filter(w => w.ticker !== ticker);
   delete watchlistInRebal[ticker];
   save();
-  renderStrategyPage();
+  renderWatchlistTab();
+  renderFullView();
 }
 
 function moveToPortfolio(ticker) {
@@ -1658,7 +1738,8 @@ function moveToPortfolio(ticker) {
   watchlist = watchlist.filter(w => w.ticker !== ticker);
   delete watchlistInRebal[ticker];
   save();
-  renderStrategyPage();
+  renderWatchlistTab();
+  renderFullView();
   renderDashboard();
 }
 
@@ -1701,32 +1782,14 @@ function insightCols(item) {
 const INSIGHT_HEADERS = `<th class="num">Price</th><th class="num">Mkt Cap</th><th class="num">P/E</th><th class="num">52wk Range</th>`;
 
 // ── STRATEGY PAGE STATE
-let strategyTab = 'full'; // 'full' | 'watch'
 
-function setStrategyTab(tab) {
-  strategyTab = tab;
-  document.getElementById('strat-btn-full').classList.toggle('active', tab === 'full');
-  document.getElementById('strat-btn-watch').classList.toggle('active', tab === 'watch');
-  document.getElementById('strat-btn-rebal').classList.toggle('active', tab === 'rebal');
-  document.getElementById('strategy-full-wrap').style.display  = tab === 'full'  ? '' : 'none';
-  document.getElementById('strategy-watch-wrap').style.display = tab === 'watch' ? '' : 'none';
-  document.getElementById('strategy-rebal-wrap').style.display = tab === 'rebal' ? '' : 'none';
-  document.getElementById('strategy-add-btn').style.display    = tab === 'watch' ? '' : 'none';
-  if (tab === 'full')  renderFullView();
-  if (tab === 'watch') renderWatchlistTab();
-  if (tab === 'rebal') renderRebalancer();
-}
+// setStrategyTab removed — strategy page merged into Research and Dashboard
 
-function renderStrategyPage() {
-  renderFullView();
-  renderWatchlistTab();
-  // Apply current tab visibility
-  setStrategyTab(strategyTab);
-}
+function renderStrategyPage() { /* merged into Research page */ }
 
 // ── FULL VIEW: portfolio + watchlist, by group
 function renderFullView() {
-  const wrap = document.getElementById('strategy-full-wrap');
+  const wrap = document.getElementById('rsch-full-inner');
 
   // Combine holdings and toggled-in watchlist items into one list per group
   const allGroupIds = [
@@ -1769,7 +1832,7 @@ function renderFullView() {
 
     // Portfolio holdings in this group
     [...gHoldings].sort((a,b) => a.ticker.localeCompare(b.ticker)).forEach(h => {
-      html += `<tr class="insight-row">
+      html += `<tr class="insight-row" style="cursor:pointer" onclick="openStockOverlay('${h.ticker}')">
         <td><span class="ticker-badge">${h.ticker}</span></td>
         <td style="font-size:12px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.companyName || '—'}</td>
         <td><span class="pill-green" style="font-size:10px">Held</span></td>
@@ -1781,7 +1844,7 @@ function renderFullView() {
     // Watchlist stocks in this group
     [...gWatchlist].sort((a,b) => a.ticker.localeCompare(b.ticker)).forEach(w => {
       const inRebal = watchlistInRebal[w.ticker] || false;
-      html += `<tr class="insight-row">
+      html += `<tr class="insight-row" style="cursor:pointer" onclick="openStockOverlay('${w.ticker}')">
         <td><span class="ticker-badge">${w.ticker}</span></td>
         <td style="font-size:12px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${w.companyName || '—'}</td>
         <td><span class="watchlist-badge">Watching</span></td>
@@ -1812,7 +1875,7 @@ function renderWatchlistTab() {
     const color   = groupColor(w.groupId || UNGROUPED_ID);
     const gname   = groupName(w.groupId || UNGROUPED_ID);
     const inRebal = watchlistInRebal[w.ticker] || false;
-    rows += `<tr class="insight-row">
+    rows += `<tr class="insight-row" style="cursor:pointer" onclick="openStockOverlay('${w.ticker}')">
       <td><span class="ticker-badge">${w.ticker}</span></td>
       <td style="font-size:12px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${w.companyName || '—'}</td>
       <td><span class="group-badge" style="background:${color}18;color:${color}">${gname}</span></td>
@@ -1844,7 +1907,7 @@ function toggleWatchRebal(ticker, checked) {
   watchlistInRebal[ticker] = checked;
   save();
   // Re-render full view so toggle stays in sync
-  if (strategyTab === 'full') renderFullView();
+  if (researchSubTab === 'full') renderFullView();
 }
 
 // ═══════════════════════════════════════
@@ -1900,7 +1963,6 @@ function importJSON(event) {
       save();
       renderDashboard();
       renderGroupsPage();
-      renderStrategyPage();
       alert(`Imported ${data.holdings.length} stocks, ${data.groups.length} groups, and ${(data.watchlist||[]).length} watchlist items.`);
     } catch(err) {
       alert('Import failed — please make sure you\'re using a valid portfolio backup file.');
@@ -2178,18 +2240,30 @@ function saveAnthropicKey() {
 }
 
 function initResearchPage() {
+  if (!researchSubTab) researchSubTab = 'full';
   setResearchSubTab(researchSubTab);
 }
 
 function setResearchSubTab(tab) {
   researchSubTab = tab;
-  ['stock','etf','notes'].forEach(t => {
-    document.getElementById('rsch-btn-' + (t === 'notes' ? 'notes' : t)).classList.toggle('active', t === tab);
-    document.getElementById('rsch-' + (t === 'notes' ? 'notes' : t)).style.display = t === tab ? '' : 'none';
+  const tabs = ['full','watch','stock','etf','notes'];
+  tabs.forEach(t => {
+    const btn = document.getElementById('rsch-btn-' + t);
+    const div = document.getElementById('rsch-' + t);
+    if (btn) btn.classList.toggle('active', t === tab);
+    if (div) div.style.display = t === tab ? '' : 'none';
   });
-  if (tab === 'notes')  renderNoteList();
-  if (tab === 'etf')    renderETFSnapshots();
-  if (tab === 'stock')  renderSavedAnalyses();
+  // Show/hide action buttons for watchlist tab
+  const refreshBtn  = document.getElementById('rsch-refresh-btn');
+  const addWatchBtn = document.getElementById('rsch-add-watch-btn');
+  if (refreshBtn)  refreshBtn.style.display  = tab === 'watch' ? '' : 'none';
+  if (addWatchBtn) addWatchBtn.style.display = tab === 'watch' ? '' : 'none';
+
+  if (tab === 'full')  { renderFullView(); }
+  if (tab === 'watch') renderWatchlistTab();
+  if (tab === 'notes') renderNoteList();
+  if (tab === 'etf')   renderETFSnapshots();
+  if (tab === 'stock') renderSavedAnalyses();
 }
 
 // ── STOCK ANALYSIS ──
@@ -2611,6 +2685,209 @@ function renderNoteList() {
         <div style="font-size:11px;color:var(--muted)">${new Date(n.updated).toLocaleDateString()}</div>
       </div>
     </div>`).join('');
+}
+
+
+// ═══════════════════════════════════════
+//  STOCK DETAIL OVERLAY
+// ═══════════════════════════════════════
+let ovTicker = null;
+let ovChartRange = '1Y';
+let ovCandles = {}; // cache: range -> data
+
+function openStockOverlay(ticker) {
+  ovTicker = ticker;
+  ovChartRange = '1Y';
+  ovCandles = {};
+  document.getElementById('ov-ticker').textContent = ticker;
+  document.getElementById('ov-name').textContent = '';
+  document.getElementById('ov-loading').style.display = 'flex';
+  document.getElementById('ov-content').style.display = 'none';
+  document.getElementById('stock-overlay').classList.add('open');
+  fetchStockOverlayData(ticker);
+}
+
+function closeStockOverlay() {
+  document.getElementById('stock-overlay').classList.remove('open');
+  ovTicker = null;
+}
+
+async function fetchStockOverlayData(ticker) {
+  if (!apiKey) {
+    document.getElementById('ov-loading').innerHTML = '⚠ Set your Finnhub API key in ⚙ Settings';
+    return;
+  }
+  try {
+    const now   = Math.floor(Date.now() / 1000);
+    const from1y = now - 31536000;
+    const [quoteRes, profileRes, metricRes, candleRes] = await Promise.all([
+      fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${apiKey}`),
+      fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${apiKey}`),
+      fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${apiKey}`),
+      fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${ticker}&resolution=W&from=${from1y}&to=${now}&token=${apiKey}`)
+    ]);
+    const quote   = await quoteRes.json();
+    const profile = await profileRes.json();
+    const metric  = await metricRes.json();
+    const candle  = await candleRes.json();
+
+    const m = metric.metric || {};
+
+    document.getElementById('ov-name').textContent = profile.name || '';
+
+    // Stats grid
+    const stats = [
+      { label: 'Market Cap',        value: fmtCap(profile.marketCapitalization ? profile.marketCapitalization * 1e6 : null) },
+      { label: 'P/E Ratio',         value: m.peBasicExclExtraTTM ? m.peBasicExclExtraTTM.toFixed(2) : '—' },
+      { label: 'EPS (TTM)',         value: m.epsTTM ? '$' + m.epsTTM.toFixed(2) : '—' },
+      { label: 'Beta',              value: m.beta ? m.beta.toFixed(2) : '—' },
+      { label: '52wk High',         value: m['52WeekHigh'] ? '$' + m['52WeekHigh'].toFixed(2) : '—', cls: 'green' },
+      { label: '52wk Low',          value: m['52WeekLow']  ? '$' + m['52WeekLow'].toFixed(2)  : '—', cls: 'red'   },
+      { label: 'Dividend Yield',    value: m.currentDividendYieldTTM ? (m.currentDividendYieldTTM).toFixed(2) + '%' : '—' },
+      { label: 'Shares Out',        value: m.sharesOutstanding ? fmtCap(m.sharesOutstanding * 1e6) : '—' },
+      { label: 'Avg Vol (10D)',     value: m['10DayAverageTradingVolume'] ? fmtVol(m['10DayAverageTradingVolume'] * 1e6) : '—' },
+      { label: 'Volume Today',      value: quote.v ? fmtVol(quote.v) : '—' },
+      { label: 'Price',             value: quote.c ? '$' + quote.c.toFixed(2) : '—' },
+      { label: 'Day Change',        value: quote.dp != null ? (quote.dp >= 0 ? '+' : '') + quote.dp.toFixed(2) + '%' : '—',
+        cls: quote.dp >= 0 ? 'green' : 'red' },
+    ];
+
+    document.getElementById('ov-stats').innerHTML = stats.map(s =>
+      `<div class="stock-stat-card">
+        <div class="stock-stat-label">${s.label}</div>
+        <div class="stock-stat-value ${s.cls || ''}">${s.value}</div>
+      </div>`
+    ).join('');
+
+    // Cache 1Y candle and draw
+    if (candle.s === 'ok') ovCandles['1Y'] = candle;
+    document.getElementById('ov-loading').style.display = 'none';
+    document.getElementById('ov-content').style.display = '';
+    drawChart(candle, '1Y');
+
+  } catch(e) {
+    document.getElementById('ov-loading').innerHTML = `⚠ Error: ${e.message}`;
+  }
+}
+
+async function loadChart(range) {
+  if (!ovTicker) return;
+  // Update active button
+  document.querySelectorAll('.chart-range-btn').forEach(b => b.classList.toggle('active', b.textContent === range));
+  ovChartRange = range;
+
+  // Use cached data if available
+  if (ovCandles[range]) { drawChart(ovCandles[range], range); return; }
+
+  document.getElementById('ov-chart-loading').style.display = 'flex';
+
+  const now  = Math.floor(Date.now() / 1000);
+  const days = { '1M':30, '3M':90, '6M':180, '1Y':365, '3Y':1095, '5Y':1825 };
+  const res  = { '1M':'D', '3M':'D', '6M':'W', '1Y':'W', '3Y':'M', '5Y':'M' };
+  const from = now - days[range] * 86400;
+
+  try {
+    const r = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${ovTicker}&resolution=${res[range]}&from=${from}&to=${now}&token=${apiKey}`);
+    const data = await r.json();
+    if (data.s === 'ok') ovCandles[range] = data;
+    document.getElementById('ov-chart-loading').style.display = 'none';
+    drawChart(data, range);
+  } catch(e) {
+    document.getElementById('ov-chart-loading').style.display = 'none';
+  }
+}
+
+function drawChart(candle, range) {
+  const canvas = document.getElementById('ov-chart');
+  const ctx    = canvas.getContext('2d');
+  const wrap   = canvas.parentElement;
+
+  // HiDPI
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width  = wrap.clientWidth  * dpr;
+  canvas.height = wrap.clientHeight * dpr;
+  canvas.style.width  = wrap.clientWidth  + 'px';
+  canvas.style.height = wrap.clientHeight + 'px';
+  ctx.scale(dpr, dpr);
+
+  const W = wrap.clientWidth;
+  const H = wrap.clientHeight;
+  const pad = { top:16, right:16, bottom:28, left:56 };
+
+  ctx.clearRect(0, 0, W, H);
+
+  if (!candle || candle.s !== 'ok' || !candle.c) {
+    ctx.fillStyle = '#9ca3af';
+    ctx.font = '12px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('No data available for this range', W/2, H/2);
+    return;
+  }
+
+  const prices = candle.c;
+  const times  = candle.t;
+  const minP = Math.min(...prices);
+  const maxP = Math.max(...prices);
+  const priceRange = maxP - minP || 1;
+  const isUp = prices[prices.length - 1] >= prices[0];
+  const lineColor = isUp ? '#16a34a' : '#dc2626';
+  const fillColor = isUp ? 'rgba(22,163,74,0.08)' : 'rgba(220,38,38,0.08)';
+
+  const xScale = (W - pad.left - pad.right) / Math.max(prices.length - 1, 1);
+  const yScale = (H - pad.top - pad.bottom) / priceRange;
+  const xPos = i => pad.left + i * xScale;
+  const yPos = p => H - pad.bottom - (p - minP) * yScale;
+
+  // Grid lines
+  const gridCount = 4;
+  ctx.strokeStyle = '#e2e2de';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= gridCount; i++) {
+    const y = pad.top + (H - pad.top - pad.bottom) * (i / gridCount);
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+    const price = maxP - (priceRange * i / gridCount);
+    ctx.fillStyle = '#6b6b66'; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('$' + price.toFixed(0), pad.left - 4, y + 3);
+  }
+
+  // Fill
+  ctx.beginPath();
+  ctx.moveTo(xPos(0), yPos(prices[0]));
+  prices.forEach((p, i) => { if (i > 0) ctx.lineTo(xPos(i), yPos(p)); });
+  ctx.lineTo(xPos(prices.length - 1), H - pad.bottom);
+  ctx.lineTo(xPos(0), H - pad.bottom);
+  ctx.closePath();
+  ctx.fillStyle = fillColor;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  ctx.moveTo(xPos(0), yPos(prices[0]));
+  prices.forEach((p, i) => { if (i > 0) ctx.lineTo(xPos(i), yPos(p)); });
+  ctx.strokeStyle = lineColor;
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // X-axis date labels
+  const labelCount = Math.min(6, prices.length);
+  const step = Math.floor(prices.length / labelCount);
+  ctx.fillStyle = '#9ca3af'; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+  for (let i = 0; i < prices.length; i += step) {
+    const d = new Date(times[i] * 1000);
+    const label = range === '1M' || range === '3M'
+      ? d.toLocaleDateString('en-US', { month:'short', day:'numeric' })
+      : d.toLocaleDateString('en-US', { month:'short', year:'2-digit' });
+    ctx.fillText(label, xPos(i), H - pad.bottom + 14);
+  }
+}
+
+function fmtVol(n) {
+  if (!n) return '—';
+  if (n >= 1e9) return (n/1e9).toFixed(1) + 'B';
+  if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n/1e3).toFixed(1) + 'K';
+  return n.toLocaleString();
 }
 
 </script>
