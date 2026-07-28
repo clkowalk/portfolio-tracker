@@ -2718,38 +2718,33 @@ async function fetchStockOverlayData(ticker) {
     return;
   }
   try {
-    const now   = Math.floor(Date.now() / 1000);
-    const from1y = now - 31536000;
-    const [quoteRes, profileRes, metricRes, candleRes] = await Promise.all([
+    // Finnhub: quote, profile, metrics (all free tier)
+    const [quoteRes, profileRes, metricRes] = await Promise.all([
       fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${apiKey}`),
       fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${apiKey}`),
-      fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${apiKey}`),
-      fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${ticker}&resolution=W&from=${from1y}&to=${now}&token=${apiKey}`)
+      fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${apiKey}`)
     ]);
     const quote   = await quoteRes.json();
     const profile = await profileRes.json();
     const metric  = await metricRes.json();
-    const candle  = await candleRes.json();
-
     const m = metric.metric || {};
 
     document.getElementById('ov-name').textContent = profile.name || '';
 
-    // Stats grid
+    // Stats grid — all from free Finnhub endpoints
     const stats = [
-      { label: 'Market Cap',        value: fmtCap(profile.marketCapitalization ? profile.marketCapitalization * 1e6 : null) },
-      { label: 'P/E Ratio',         value: m.peBasicExclExtraTTM ? m.peBasicExclExtraTTM.toFixed(2) : '—' },
-      { label: 'EPS (TTM)',         value: m.epsTTM ? '$' + m.epsTTM.toFixed(2) : '—' },
-      { label: 'Beta',              value: m.beta ? m.beta.toFixed(2) : '—' },
-      { label: '52wk High',         value: m['52WeekHigh'] ? '$' + m['52WeekHigh'].toFixed(2) : '—', cls: 'green' },
-      { label: '52wk Low',          value: m['52WeekLow']  ? '$' + m['52WeekLow'].toFixed(2)  : '—', cls: 'red'   },
-      { label: 'Dividend Yield',    value: m.currentDividendYieldTTM ? (m.currentDividendYieldTTM).toFixed(2) + '%' : '—' },
-      { label: 'Shares Out',        value: m.sharesOutstanding ? fmtCap(m.sharesOutstanding * 1e6) : '—' },
-      { label: 'Avg Vol (10D)',     value: m['10DayAverageTradingVolume'] ? fmtVol(m['10DayAverageTradingVolume'] * 1e6) : '—' },
-      { label: 'Volume Today',      value: quote.v ? fmtVol(quote.v) : '—' },
-      { label: 'Price',             value: quote.c ? '$' + quote.c.toFixed(2) : '—' },
-      { label: 'Day Change',        value: quote.dp != null ? (quote.dp >= 0 ? '+' : '') + quote.dp.toFixed(2) + '%' : '—',
-        cls: quote.dp >= 0 ? 'green' : 'red' },
+      { label: 'Price',          value: quote.c   ? '$' + quote.c.toFixed(2) : '—' },
+      { label: 'Day Change',     value: quote.dp  != null ? (quote.dp >= 0 ? '+' : '') + quote.dp.toFixed(2) + '%' : '—', cls: quote.dp >= 0 ? 'green' : 'red' },
+      { label: 'Market Cap',     value: fmtCap(profile.marketCapitalization ? profile.marketCapitalization * 1e6 : null) },
+      { label: 'P/E Ratio',      value: m.peBasicExclExtraTTM ? m.peBasicExclExtraTTM.toFixed(2) : '—' },
+      { label: 'EPS (TTM)',      value: m.epsTTM  ? '$' + m.epsTTM.toFixed(2) : '—' },
+      { label: 'Beta',           value: m.beta    ? m.beta.toFixed(2) : '—' },
+      { label: '52wk High',      value: m['52WeekHigh'] ? '$' + m['52WeekHigh'].toFixed(2) : '—', cls: 'green' },
+      { label: '52wk Low',       value: m['52WeekLow']  ? '$' + m['52WeekLow'].toFixed(2)  : '—', cls: 'red'   },
+      { label: 'Dividend Yield', value: m.currentDividendYieldTTM ? m.currentDividendYieldTTM.toFixed(2) + '%' : '—' },
+      { label: 'Shares Out',     value: m.sharesOutstanding ? fmtCap(m.sharesOutstanding * 1e6) : '—' },
+      { label: 'Avg Vol (10D)',  value: m['10DayAverageTradingVolume'] ? fmtVol(m['10DayAverageTradingVolume'] * 1e6) : '—' },
+      { label: 'Volume Today',   value: quote.v   ? fmtVol(quote.v) : '—' },
     ];
 
     document.getElementById('ov-stats').innerHTML = stats.map(s =>
@@ -2759,11 +2754,10 @@ async function fetchStockOverlayData(ticker) {
       </div>`
     ).join('');
 
-    // Cache 1Y candle and draw
-    if (candle.s === 'ok') ovCandles['1Y'] = candle;
+    // Show overlay, then load chart via Alpha Vantage
     document.getElementById('ov-loading').style.display = 'none';
     document.getElementById('ov-content').style.display = '';
-    requestAnimationFrame(() => drawChart(candle, '1Y'));
+    loadChart('1Y');
 
   } catch(e) {
     document.getElementById('ov-loading').innerHTML = `⚠ Error: ${e.message}`;
@@ -2772,7 +2766,6 @@ async function fetchStockOverlayData(ticker) {
 
 async function loadChart(range) {
   if (!ovTicker) return;
-  // Update active button
   document.querySelectorAll('.chart-range-btn').forEach(b => b.classList.toggle('active', b.textContent === range));
   ovChartRange = range;
 
@@ -2781,17 +2774,57 @@ async function loadChart(range) {
 
   document.getElementById('ov-chart-loading').style.display = 'flex';
 
-  const now  = Math.floor(Date.now() / 1000);
-  const days = { '1M':30, '3M':90, '6M':180, '1Y':365, '3Y':1095, '5Y':1825 };
-  const res  = { '1M':'D', '3M':'D', '6M':'W', '1Y':'W', '3Y':'M', '5Y':'M' };
-  const from = now - days[range] * 86400;
+  if (!fmpKey) {
+    document.getElementById('ov-chart-loading').style.display = 'none';
+    const canvas = document.getElementById('ov-chart');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.parentElement.clientWidth;
+    canvas.height = canvas.parentElement.clientHeight;
+    ctx.fillStyle = '#9ca3af'; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Set Alpha Vantage key in ⚙ Settings to enable charts', canvas.width/2, canvas.height/2);
+    return;
+  }
+
+  // Alpha Vantage: use TIME_SERIES_DAILY_ADJUSTED for ≤1Y, TIME_SERIES_WEEKLY_ADJUSTED for longer
+  const useWeekly = ['3Y','5Y'].includes(range);
+  const fn = useWeekly ? 'TIME_SERIES_WEEKLY_ADJUSTED' : 'TIME_SERIES_DAILY_ADJUSTED';
+  const seriesKey = useWeekly ? 'Weekly Adjusted Time Series' : 'Time Series (Daily)';
 
   try {
-    const r = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${ovTicker}&resolution=${res[range]}&from=${from}&to=${now}&token=${apiKey}`);
+    const r = await fetch(`https://www.alphavantage.co/query?function=${fn}&symbol=${ovTicker}&outputsize=full&apikey=${fmpKey}`);
     const data = await r.json();
-    if (data.s === 'ok') ovCandles[range] = data;
+
+    if (data['Note'] || data['Information']) {
+      document.getElementById('ov-chart-loading').style.display = 'none';
+      const canvas = document.getElementById('ov-chart');
+      const ctx = canvas.getContext('2d');
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight;
+      ctx.fillStyle = '#9ca3af'; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('API limit reached — try again later', canvas.width/2, canvas.height/2);
+      return;
+    }
+
+    const series = data[seriesKey] || {};
+    const cutoffDays = { '1M':30, '3M':90, '6M':180, '1Y':365, '3Y':1095, '5Y':1825 };
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - cutoffDays[range]);
+
+    // Convert AV series to {t, c} arrays sorted oldest→newest
+    const entries = Object.entries(series)
+      .filter(([date]) => new Date(date) >= cutoff)
+      .sort(([a],[b]) => a.localeCompare(b));
+
+    const closeKey = useWeekly ? '5. adjusted close' : '5. adjusted close';
+    const converted = {
+      s: entries.length ? 'ok' : 'no_data',
+      t: entries.map(([d]) => Math.floor(new Date(d).getTime() / 1000)),
+      c: entries.map(([,v]) => parseFloat(v[closeKey] || v['4. close']) || 0)
+    };
+
+    if (converted.s === 'ok') ovCandles[range] = converted;
     document.getElementById('ov-chart-loading').style.display = 'none';
-    requestAnimationFrame(() => drawChart(data, range));
+    requestAnimationFrame(() => drawChart(converted, range));
+
   } catch(e) {
     document.getElementById('ov-chart-loading').style.display = 'none';
   }
