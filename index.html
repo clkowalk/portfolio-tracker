@@ -1084,8 +1084,7 @@ function showPage(name, btn) {
   if (name === 'stockresearch') initResearchPage();
   if (name === 'community') updateCommunityUI();
   if (name === 'dashboard') { setDashTab(dashTab); }
-
-  if (name === 'research') initResearchPage();
+  if (name === 'research') initStrategyPage();
 }
 
 
@@ -2087,7 +2086,7 @@ function fmt(n) {
 // ═══════════════════════════════════════
 let researchTab = 'timeline';
 
-function initResearchPage() {
+function initStrategyPage() {
   setResearchTab(researchTab);
   if (researchTab === 'timeline') setTimeout(renderTimeline, 50);
 }
@@ -2098,7 +2097,7 @@ function setResearchTab(tab) {
   document.getElementById('research-btn-infographic').classList.toggle('active', tab === 'infographic');
   document.getElementById('research-timeline').style.display   = tab === 'timeline'    ? '' : 'none';
   document.getElementById('research-infographic').style.display = tab === 'infographic' ? '' : 'none';
-  if (tab === 'timeline') renderTimeline();
+  if (tab === 'timeline') setTimeout(renderTimeline, 50);
   if (tab === 'infographic') loadInfographic();
 }
 
