@@ -3049,10 +3049,18 @@ function checkIncomingShare() {
     if (!banner) return;
     banner.style.display = '';
     document.getElementById('incoming-share-meta').textContent =
-      `From: ${data.sharedBy || 'Unknown'} · ${new Date(data.sharedAt).toLocaleDateString()} · ${(data.savedAnalyses||[]).length} analyses · ${(data.etfSnapshots||[]).length} ETF snapshots · ${(data.notes||[]).length} notes`;
+      `From: ${data.sharedBy || 'Unknown'} · ${new Date(data.sharedAt).toLocaleDateString()} · ${(data.savedAnalyses||[]).length} analyses · ${(data.etfSnapshots||[]).length} ETF snapshots · ${(data.notes||[]).length} notes · ${(data.watchlist||[]).length} watchlist · ${(data.holdings||[]).length} holdings`;
 
     // Quick preview
     let preview = '';
+    if (data.watchlist?.length) {
+      preview += `<div style="margin-bottom:8px;"><span style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.4px">👀 Watchlist</span><br>` +
+        data.watchlist.map(w => `<span class="ticker-badge" style="margin:2px">${w.ticker}</span>`).join('') + '</div>';
+    }
+    if (data.holdings?.length) {
+      preview += `<div style="margin-bottom:8px;"><span style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.4px">📈 Holdings</span><br>` +
+        data.holdings.map(h => `<span class="ticker-badge" style="margin:2px">${h.ticker}</span>`).join('') + '</div>';
+    }
     if (data.savedAnalyses?.length) {
       preview += `<div style="margin-bottom:8px;"><span style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.4px">📊 Stock Analyses</span><br>` +
         data.savedAnalyses.map(a => `<span class="ticker-badge" style="margin:2px">${a.ticker}</span>`).join('') + '</div>';
@@ -3105,7 +3113,10 @@ function generateShareLink() {
     sharedAt:      new Date().toISOString(),
     savedAnalyses,
     etfSnapshots,
-    notes
+    notes,
+    watchlist,
+    holdings,
+    groups
   };
 
   const json    = JSON.stringify(data);
@@ -3117,7 +3128,7 @@ function generateShareLink() {
 
   const kb = Math.round(encoded.length / 1024 * 10) / 10;
   document.getElementById('share-link-stats').textContent =
-    `Link size: ~${kb} KB · ${savedAnalyses.length} analyses · ${etfSnapshots.length} ETF snapshots · ${notes.length} notes`;
+    `Link size: ~${kb} KB · ${savedAnalyses.length} analyses · ${etfSnapshots.length} ETF snapshots · ${notes.length} notes · ${watchlist.length} watchlist · ${holdings.length} holdings`;
 
   if (kb > 50) {
     document.getElementById('share-link-stats').textContent += ' ⚠ Link may be too long for some email clients — try sharing fewer items';
@@ -3143,7 +3154,7 @@ function renderSavedShares() {
     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
       <div>
         <div style="font-size:13px;font-weight:600">${s.sharedBy || 'Unknown'}</div>
-        <div style="font-size:11px;color:var(--muted)">${new Date(s.sharedAt).toLocaleDateString()} · ${(s.savedAnalyses||[]).length} analyses · ${(s.etfSnapshots||[]).length} ETF snapshots · ${(s.notes||[]).length} notes</div>
+        <div style="font-size:11px;color:var(--muted)">${new Date(s.sharedAt).toLocaleDateString()} · ${(s.savedAnalyses||[]).length} analyses · ${(s.etfSnapshots||[]).length} ETF snapshots · ${(s.notes||[]).length} notes · ${(s.watchlist||[]).length} watchlist · ${(s.holdings||[]).length} holdings</div>
       </div>
       <div style="display:flex;gap:6px;">
         <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px" onclick="viewSavedShare(${i})">View →</button>
@@ -3215,6 +3226,65 @@ function renderSharedViewer(data) {
   }
 
   if (!html) html = '<div class="analysis-placeholder"><div class="big">📭</div><p>No content in this share.</p></div>';
+
+  // Watchlist
+  if (data.watchlist?.length) {
+    let wHtml = `<h4 style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--accent);margin:20px 0 12px">👀 Watchlist (${data.watchlist.length})</h4>`;
+    const wGroups = {};
+    data.watchlist.forEach(w => {
+      const gid = w.groupId || '__ungrouped__';
+      if (!wGroups[gid]) wGroups[gid] = [];
+      wGroups[gid].push(w);
+    });
+    wHtml += Object.entries(wGroups).map(([gid, items]) => {
+      const gname = (data.groups||[]).find(g => g.id === gid)?.name || 'Ungrouped';
+      return `<div style="margin-bottom:12px">
+        <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px">${gname}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px">${items.map(w => `<span class="ticker-badge">${w.ticker}</span>${w.companyName ? `<span style="font-size:11px;color:var(--muted);align-self:center;margin-left:2px">${w.companyName}</span>` : ''}`).join(' ')}</div>
+      </div>`;
+    }).join('');
+    html = wHtml + html;
+  }
+
+  // Holdings / Full View
+  if (data.holdings?.length) {
+    const totalVal = data.holdings.reduce((s, h) => s + (h.currentPrice || h.cost) * h.shares, 0);
+    let fHtml = `<h4 style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--accent);margin-bottom:12px">📈 Holdings (${data.holdings.length})</h4>`;
+    // Group by group
+    const byGroup = {};
+    data.holdings.forEach(h => {
+      const gid = h.groupId || '__ungrouped__';
+      if (!byGroup[gid]) byGroup[gid] = [];
+      byGroup[gid].push(h);
+    });
+    fHtml += Object.entries(byGroup).map(([gid, items]) => {
+      const gname = (data.groups||[]).find(g => g.id === gid)?.name || 'Ungrouped';
+      const gColor = (data.groups||[]).find(g => g.id === gid)?.color || '#9ca3af';
+      return `<div style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+          <span style="width:8px;height:8px;border-radius:50%;background:${gColor};display:inline-block"></span>
+          <span style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px">${gname}</span>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--surface2)">
+            <th style="padding:6px 10px;text-align:left;font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase">Ticker</th>
+            <th style="padding:6px 10px;text-align:left;font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase">Name</th>
+            <th style="padding:6px 10px;text-align:right;font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase">% of Portfolio</th>
+          </tr></thead>
+          <tbody>${items.sort((a,b)=>a.ticker.localeCompare(b.ticker)).map(h => {
+            const val = (h.currentPrice || h.cost) * h.shares;
+            const pct = totalVal ? (val / totalVal * 100).toFixed(1) : '—';
+            return `<tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:7px 10px"><span class="ticker-badge">${h.ticker}</span></td>
+              <td style="padding:7px 10px;color:var(--muted)">${h.companyName || '—'}</td>
+              <td style="padding:7px 10px;text-align:right;font-family:var(--mono)">${pct}%</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>`;
+    }).join('');
+    html = fHtml + html;
+  }
   document.getElementById('viewer-body').innerHTML = html;
   document.getElementById('shared-viewer').scrollIntoView({ behavior: 'smooth' });
 }
