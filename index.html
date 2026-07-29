@@ -2089,6 +2089,7 @@ let researchTab = 'timeline';
 
 function initResearchPage() {
   setResearchTab(researchTab);
+  if (researchTab === 'timeline') setTimeout(renderTimeline, 50);
 }
 
 function setResearchTab(tab) {
