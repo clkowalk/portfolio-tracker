@@ -3101,7 +3101,7 @@ function dismissIncomingShare() {
 // Generate a shareable link
 function generateShareLink() {
   const data = {
-    sharedBy:      currentUser?.displayName || currentUser?.email || 'Anonymous',
+    sharedBy:      'Me',
     sharedAt:      new Date().toISOString(),
     savedAnalyses,
     etfSnapshots,
