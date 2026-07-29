@@ -345,6 +345,7 @@
   .tl-cat-badges { display: flex; flex-wrap: wrap; gap: 6px; }
   @media (max-width: 600px) { .tl-2col { grid-template-columns: 1fr; } }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
 </head>
 <body>
 
@@ -354,6 +355,7 @@
     <button class="active" onclick="showPage('dashboard', this)">Dashboard</button>
     <button onclick="showPage('research', this)">Strategy</button>
     <button onclick="showPage('stockresearch', this)">Research</button>
+    <button onclick="showPage('community', this)" id="nav-community-btn">Community</button>
     <button onclick="showPage('groups', this)" style="display:none" id="nav-groups-btn">Groups</button>
   </nav>
   <div class="header-right">
@@ -694,6 +696,83 @@
   </div>
 </div>
 
+<!-- ═══════════════════ COMMUNITY ═══════════════════ -->
+<div class="page" id="page-community">
+  <div style="padding:32px;max-width:1280px;margin:0 auto">
+
+    <!-- Incoming share banner (shown when URL has ?shared=) -->
+    <div id="incoming-share-banner" style="display:none;background:var(--accent-light);border:1px solid #bfdbfe;border-radius:var(--radius);padding:20px 24px;margin-bottom:24px;">
+      <div style="font-size:15px;font-weight:600;color:var(--accent);margin-bottom:6px;">📥 Someone shared their research with you!</div>
+      <div style="font-size:13px;color:#1e40af;margin-bottom:16px;" id="incoming-share-meta"></div>
+      <div id="incoming-share-preview" style="margin-bottom:16px;"></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary" onclick="acceptSharedResearch()">✓ Save to my Community tab</button>
+        <button class="btn btn-secondary" onclick="dismissIncomingShare()">Dismiss</button>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+      <div>
+        <h2 style="font-size:18px;font-weight:600;margin-bottom:4px;">Community</h2>
+        <p style="font-size:13px;color:var(--muted);">Generate a shareable link to your Research and view research others have shared with you.</p>
+      </div>
+      <button class="btn btn-primary" onclick="generateShareLink()">🔗 Generate Share Link</button>
+    </div>
+
+    <!-- Share link output -->
+    <div id="share-link-wrap" style="display:none;margin-bottom:24px;">
+      <div class="research-card">
+        <div class="research-card-header">
+          <div class="research-card-title">Your Share Link</div>
+          <button class="btn-ghost" onclick="document.getElementById('share-link-wrap').style.display='none'">✕</button>
+        </div>
+        <div style="padding:20px;">
+          <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Copy this link and send it to anyone you want to share your Research with. When they open it, they'll see a preview and can save it to their Community tab.</p>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input id="share-link-output" type="text" readonly
+              style="flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:7px;font-size:11px;font-family:var(--mono);background:var(--surface2);color:var(--text);outline:none;">
+            <button class="btn btn-primary" onclick="copyShareLink()">Copy</button>
+          </div>
+          <div id="share-link-stats" style="font-size:11px;color:var(--muted);margin-top:8px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Saved shared research -->
+    <div class="research-card">
+      <div class="research-card-header">
+        <div>
+          <div class="research-card-title">Saved Shared Research</div>
+          <div class="research-card-sub">Research others have shared with you</div>
+        </div>
+      </div>
+      <div id="saved-shares-list" style="padding:16px;">
+        <div class="analysis-placeholder"><div class="big">📥</div><p>No shared research yet.<br>Ask someone to send you their share link.</p></div>
+      </div>
+    </div>
+
+    <!-- Viewer panel -->
+    <div id="shared-viewer" style="display:none;margin-top:24px;">
+      <div class="research-card">
+        <div class="research-card-header">
+          <div>
+            <div class="research-card-title" id="viewer-title">Viewing shared research</div>
+            <div class="research-card-sub" id="viewer-sub"></div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-danger" onclick="deleteSharedEntry(currentViewingId)" style="opacity:0.7">🗑 Remove</button>
+            <button class="btn-ghost" onclick="document.getElementById('shared-viewer').style.display='none'">✕ Close</button>
+          </div>
+        </div>
+        <div id="viewer-body" style="padding:20px;"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+
 <!-- ═══════════════════ MODALS ═══════════════════ -->
 
 <!-- Add Stock -->
@@ -1003,6 +1082,7 @@ function showPage(name, btn) {
   btn.classList.add('active');
   if (name === 'groups') renderGroupsPage();
   if (name === 'stockresearch') initResearchPage();
+  if (name === 'community') updateCommunityUI();
   if (name === 'dashboard') { setDashTab(dashTab); }
 
   if (name === 'research') initResearchPage();
@@ -1984,6 +2064,7 @@ function fmt(n) {
 //  INIT
 // ═══════════════════════════════════════
 (async function init() {
+  checkIncomingShare();
   checkApiBanner();
   renderDashboard();
   if (apiKey && holdings.length) {
@@ -2769,8 +2850,20 @@ async function loadChart(range) {
   document.querySelectorAll('.chart-range-btn').forEach(b => b.classList.toggle('active', b.textContent === range));
   ovChartRange = range;
 
-  // Use cached data if available
+  // Use in-memory cache first (same overlay session)
   if (ovCandles[range]) { requestAnimationFrame(() => drawChart(ovCandles[range], range)); return; }
+
+  // Check localStorage daily cache
+  const today = new Date().toISOString().slice(0, 10);
+  const cacheKey = `pt_chart_${ovTicker}_${range}`;
+  try {
+    const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+    if (cached && cached.date === today && cached.data) {
+      ovCandles[range] = cached.data;
+      requestAnimationFrame(() => drawChart(cached.data, range));
+      return;
+    }
+  } catch(e) {}
 
   document.getElementById('ov-chart-loading').style.display = 'flex';
 
@@ -2785,7 +2878,6 @@ async function loadChart(range) {
     return;
   }
 
-  // Alpha Vantage: use TIME_SERIES_DAILY_ADJUSTED for ≤1Y, TIME_SERIES_WEEKLY_ADJUSTED for longer
   const useWeekly = ['3Y','5Y'].includes(range);
   const fn = useWeekly ? 'TIME_SERIES_WEEKLY_ADJUSTED' : 'TIME_SERIES_DAILY_ADJUSTED';
   const seriesKey = useWeekly ? 'Weekly Adjusted Time Series' : 'Time Series (Daily)';
@@ -2809,19 +2901,24 @@ async function loadChart(range) {
     const cutoffDays = { '1M':30, '3M':90, '6M':180, '1Y':365, '3Y':1095, '5Y':1825 };
     const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - cutoffDays[range]);
 
-    // Convert AV series to {t, c} arrays sorted oldest→newest
     const entries = Object.entries(series)
       .filter(([date]) => new Date(date) >= cutoff)
       .sort(([a],[b]) => a.localeCompare(b));
 
-    const closeKey = useWeekly ? '5. adjusted close' : '5. adjusted close';
     const converted = {
       s: entries.length ? 'ok' : 'no_data',
       t: entries.map(([d]) => Math.floor(new Date(d).getTime() / 1000)),
-      c: entries.map(([,v]) => parseFloat(v[closeKey] || v['4. close']) || 0)
+      c: entries.map(([,v]) => parseFloat(v['5. adjusted close'] || v['4. close']) || 0)
     };
 
-    if (converted.s === 'ok') ovCandles[range] = converted;
+    if (converted.s === 'ok') {
+      ovCandles[range] = converted;
+      // Save to localStorage with today's date — auto-expires tomorrow
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify({ date: today, data: converted }));
+      } catch(e) {} // ignore if storage full
+    }
+
     document.getElementById('ov-chart-loading').style.display = 'none';
     requestAnimationFrame(() => drawChart(converted, range));
 
@@ -2924,6 +3021,207 @@ function fmtVol(n) {
   if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
   if (n >= 1e3) return (n/1e3).toFixed(1) + 'K';
   return n.toLocaleString();
+}
+
+
+// ═══════════════════════════════════════
+//  COMMUNITY — URL SHARE SYSTEM
+// ═══════════════════════════════════════
+let savedShares    = JSON.parse(localStorage.getItem('pt_saved_shares') || '[]');
+let incomingData   = null;
+let currentViewingId = null;
+
+function saveSavedShares() { localStorage.setItem('pt_saved_shares', JSON.stringify(savedShares)); }
+
+// Check URL for ?shared= parameter on load
+function checkIncomingShare() {
+  const params = new URLSearchParams(window.location.search);
+  const encoded = params.get('shared');
+  if (!encoded) return;
+
+  try {
+    const json = LZString.decompressFromEncodedURIComponent(encoded);
+    const data = JSON.parse(json);
+    incomingData = data;
+
+    // Show banner
+    const banner = document.getElementById('incoming-share-banner');
+    if (!banner) return;
+    banner.style.display = '';
+    document.getElementById('incoming-share-meta').textContent =
+      `From: ${data.sharedBy || 'Unknown'} · ${new Date(data.sharedAt).toLocaleDateString()} · ${(data.savedAnalyses||[]).length} analyses · ${(data.etfSnapshots||[]).length} ETF snapshots · ${(data.notes||[]).length} notes`;
+
+    // Quick preview
+    let preview = '';
+    if (data.savedAnalyses?.length) {
+      preview += `<div style="margin-bottom:8px;"><span style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.4px">📊 Stock Analyses</span><br>` +
+        data.savedAnalyses.map(a => `<span class="ticker-badge" style="margin:2px">${a.ticker}</span>`).join('') + '</div>';
+    }
+    if (data.etfSnapshots?.length) {
+      const names = [...new Set(data.etfSnapshots.map(s => s.name))];
+      preview += `<div style="margin-bottom:8px;"><span style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.4px">📦 ETF Snapshots</span><br>` +
+        names.map(n => `<span class="ticker-badge" style="margin:2px">${n}</span>`).join('') + '</div>';
+    }
+    if (data.notes?.length) {
+      preview += `<div><span style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.4px">📝 Notes</span><br>` +
+        data.notes.map(n => `<span style="font-size:12px;color:var(--muted);margin-right:8px">• ${n.title}</span>`).join('') + '</div>';
+    }
+    document.getElementById('incoming-share-preview').innerHTML = preview || '<span style="font-size:12px;color:var(--muted)">No content</span>';
+
+    // Auto-navigate to Community tab
+    const communityBtn = document.querySelector('nav button[onclick*="community"]');
+    if (communityBtn) communityBtn.click();
+
+    // Clean URL without reloading
+    const cleanUrl = window.location.pathname;
+    window.history.replaceState({}, document.title, cleanUrl);
+
+  } catch(e) {
+    console.warn('Could not parse incoming share:', e);
+  }
+}
+
+function acceptSharedResearch() {
+  if (!incomingData) return;
+  // Check for duplicate
+  const isDupe = savedShares.some(s => s.sharedAt === incomingData.sharedAt && s.sharedBy === incomingData.sharedBy);
+  if (isDupe) { showToast('Already saved'); dismissIncomingShare(); return; }
+  savedShares.unshift({ ...incomingData, savedAt: new Date().toISOString() });
+  saveSavedShares();
+  dismissIncomingShare();
+  renderSavedShares();
+  showToast('✓ Research saved to Community tab');
+}
+
+function dismissIncomingShare() {
+  incomingData = null;
+  document.getElementById('incoming-share-banner').style.display = 'none';
+}
+
+// Generate a shareable link
+function generateShareLink() {
+  const data = {
+    sharedBy:      currentUser?.displayName || currentUser?.email || 'Anonymous',
+    sharedAt:      new Date().toISOString(),
+    savedAnalyses,
+    etfSnapshots,
+    notes
+  };
+
+  const json    = JSON.stringify(data);
+  const encoded = LZString.compressToEncodedURIComponent(json);
+  const url     = `${window.location.origin}${window.location.pathname}?shared=${encoded}`;
+
+  document.getElementById('share-link-wrap').style.display = '';
+  document.getElementById('share-link-output').value = url;
+
+  const kb = Math.round(encoded.length / 1024 * 10) / 10;
+  document.getElementById('share-link-stats').textContent =
+    `Link size: ~${kb} KB · ${savedAnalyses.length} analyses · ${etfSnapshots.length} ETF snapshots · ${notes.length} notes`;
+
+  if (kb > 50) {
+    document.getElementById('share-link-stats').textContent += ' ⚠ Link may be too long for some email clients — try sharing fewer items';
+  }
+}
+
+function copyShareLink() {
+  const input = document.getElementById('share-link-output');
+  navigator.clipboard.writeText(input.value)
+    .then(() => showToast('✓ Link copied to clipboard'))
+    .catch(() => { input.select(); document.execCommand('copy'); showToast('✓ Copied'); });
+}
+
+// Render saved shares list
+function renderSavedShares() {
+  const wrap = document.getElementById('saved-shares-list');
+  if (!wrap) return;
+  if (!savedShares.length) {
+    wrap.innerHTML = '<div class="analysis-placeholder"><div class="big">📥</div><p>No shared research yet.<br>Ask someone to send you their share link.</p></div>';
+    return;
+  }
+  wrap.innerHTML = savedShares.map((s, i) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+      <div>
+        <div style="font-size:13px;font-weight:600">${s.sharedBy || 'Unknown'}</div>
+        <div style="font-size:11px;color:var(--muted)">${new Date(s.sharedAt).toLocaleDateString()} · ${(s.savedAnalyses||[]).length} analyses · ${(s.etfSnapshots||[]).length} ETF snapshots · ${(s.notes||[]).length} notes</div>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px" onclick="viewSavedShare(${i})">View →</button>
+        <button class="btn-danger" onclick="deleteSharedEntry(${i})">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function viewSavedShare(i) {
+  const s = savedShares[i];
+  if (!s) return;
+  currentViewingId = i;
+  renderSharedViewer(s);
+}
+
+function deleteSharedEntry(i) {
+  savedShares.splice(i, 1);
+  saveSavedShares();
+  renderSavedShares();
+  document.getElementById('shared-viewer').style.display = 'none';
+  showToast('Removed');
+}
+
+function renderSharedViewer(data) {
+  document.getElementById('viewer-title').textContent = (data.sharedBy || 'Unknown') + "'s Research";
+  document.getElementById('viewer-sub').textContent   = 'Shared ' + new Date(data.sharedAt).toLocaleDateString();
+  document.getElementById('shared-viewer').style.display = '';
+
+  let html = '';
+
+  if (data.savedAnalyses?.length) {
+    html += `<h4 style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--accent);margin-bottom:12px">📊 Stock Analyses (${data.savedAnalyses.length})</h4>`;
+    html += data.savedAnalyses.map(a => `
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:10px">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px">
+          <span class="ticker-badge">${a.ticker}</span>
+          <span style="font-size:12px;color:var(--muted)">${a.name||''}</span>
+          <span style="font-size:11px;color:var(--muted);margin-left:auto">${new Date(a.date).toLocaleDateString()}</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.7">${(a.markdown||'').replace(/^## (.+)$/gm,'<strong style="color:var(--text)">$1</strong>').replace(/
+/g,'<br>')}</div>
+      </div>`).join('');
+  }
+
+  if (data.etfSnapshots?.length) {
+    const names = [...new Set(data.etfSnapshots.map(s => s.name))];
+    html += `<h4 style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--accent);margin:20px 0 12px">📦 ETF Snapshots</h4>`;
+    html += names.map(name => {
+      const snaps = data.etfSnapshots.filter(s => s.name === name).sort((a,b) => a.date.localeCompare(b.date));
+      const latest = snaps[snaps.length - 1];
+      const maxW = Math.max(...latest.holdings.map(h => h.weight));
+      return `<div style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span class="ticker-badge">${name}</span><span style="font-size:11px;color:var(--muted)">${snaps.length} snapshot${snaps.length>1?'s':''} · latest: ${latest.date}</span></div>
+        ${latest.holdings.map(h => `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:12px">
+          <span style="font-weight:700;color:var(--accent);min-width:50px;font-family:var(--mono)">${h.ticker}</span>
+          <div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="height:100%;width:${(h.weight/maxW*100).toFixed(0)}%;background:var(--accent);border-radius:3px"></div></div>
+          <span style="font-family:var(--mono);color:var(--muted);min-width:40px;text-align:right">${h.weight.toFixed(1)}%</span>
+        </div>`).join('')}
+      </div>`;
+    }).join('');
+  }
+
+  if (data.notes?.length) {
+    html += `<h4 style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--accent);margin:20px 0 12px">📝 Notes</h4>`;
+    html += data.notes.map(n => `
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:10px">
+        <div style="font-weight:600;font-size:13px;margin-bottom:6px">${n.title}</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.7;white-space:pre-wrap">${n.body||''}</div>
+      </div>`).join('');
+  }
+
+  if (!html) html = '<div class="analysis-placeholder"><div class="big">📭</div><p>No content in this share.</p></div>';
+  document.getElementById('viewer-body').innerHTML = html;
+  document.getElementById('shared-viewer').scrollIntoView({ behavior: 'smooth' });
+}
+
+function updateCommunityUI() {
+  renderSavedShares();
 }
 
 </script>
