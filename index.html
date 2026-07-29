@@ -345,9 +345,6 @@
   .tl-cat-badges { display: flex; flex-wrap: wrap; gap: 6px; }
   @media (max-width: 600px) { .tl-2col { grid-template-columns: 1fr; } }
 </style>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -357,18 +354,9 @@
     <button class="active" onclick="showPage('dashboard', this)">Dashboard</button>
     <button onclick="showPage('research', this)">Strategy</button>
     <button onclick="showPage('stockresearch', this)">Research</button>
-    <button onclick="showPage('community', this)" id="nav-community-btn">Community</button>
     <button onclick="showPage('groups', this)" style="display:none" id="nav-groups-btn">Groups</button>
   </nav>
   <div class="header-right">
-    <div id="auth-btn-wrap">
-      <button class="api-key-btn" onclick="signInWithGoogle()" id="signin-btn">🔐 Sign In</button>
-      <div id="user-pill" style="display:none;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer" onclick="openUserMenu()">
-        <img id="user-avatar" src="" style="width:20px;height:20px;border-radius:50%;display:none">
-        <span id="user-name" style="color:var(--text);font-weight:500"></span>
-        <span style="color:var(--muted)">▾</span>
-      </div>
-    </div>
     <button class="api-key-btn" id="hide-btn" onclick="toggleHide()" title="Hide values">👁 Hide Values</button>
     <button class="api-key-btn" onclick="openSettingsModal()">⚙ Settings</button>
     <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(event)">
@@ -706,114 +694,6 @@
   </div>
 </div>
 
-<!-- ═══════════════════ COMMUNITY ═══════════════════ -->
-<div class="page" id="page-community">
-  <div style="padding:32px;max-width:1280px;margin:0 auto">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
-      <div>
-        <h2 style="font-size:18px;font-weight:600;margin-bottom:4px;">Community</h2>
-        <p style="font-size:13px;color:var(--muted);">Share your Research tab with people you choose. Sign in to get started.</p>
-      </div>
-      <div id="community-actions" style="display:none;gap:8px;display:flex">
-        <button class="btn btn-primary" onclick="openShareModal()">+ Share My Research</button>
-      </div>
-    </div>
-
-    <!-- Not signed in state -->
-    <div id="community-signin-prompt" class="empty-state">
-      <div class="big">🔐</div>
-      <p>Sign in with Google to share your research<br>and view research shared with you.</p>
-      <button class="btn btn-primary" style="margin-top:16px" onclick="signInWithGoogle()">Sign in with Google</button>
-    </div>
-
-    <!-- Signed in state -->
-    <div id="community-content" style="display:none">
-      <div class="research-layout">
-        <!-- My shares -->
-        <div>
-          <div class="research-card">
-            <div class="research-card-header">
-              <div>
-                <div class="research-card-title">My Shared Research</div>
-                <div class="research-card-sub" id="my-share-id-display"></div>
-              </div>
-              <button class="btn btn-primary" style="font-size:11px;padding:5px 12px" onclick="openShareModal()">Share →</button>
-            </div>
-            <div id="my-shares-list" style="padding:16px">
-              <div class="analysis-placeholder"><div class="big">📤</div><p>You haven't shared your research yet.</p></div>
-            </div>
-          </div>
-        </div>
-        <!-- Shared with me -->
-        <div>
-          <div class="research-card">
-            <div class="research-card-header">
-              <div>
-                <div class="research-card-title">Shared With Me</div>
-                <div class="research-card-sub">Research others have shared with you</div>
-              </div>
-              <button class="btn btn-secondary" style="font-size:11px;padding:5px 12px" onclick="loadSharedWithMe()">↻ Refresh</button>
-            </div>
-            <div id="shared-with-me-list" style="padding:16px">
-              <div class="analysis-placeholder"><div class="big">📥</div><p>No research shared with you yet.</p></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Viewer panel -->
-      <div id="shared-viewer" style="display:none;margin-top:24px">
-        <div class="research-card">
-          <div class="research-card-header">
-            <div>
-              <div class="research-card-title" id="viewer-title">Viewing shared research</div>
-              <div class="research-card-sub" id="viewer-sub"></div>
-            </div>
-            <button class="btn-ghost" onclick="document.getElementById('shared-viewer').style.display='none'">✕ Close</button>
-          </div>
-          <div id="viewer-body" style="padding:20px"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Share Modal -->
-<div class="modal-overlay" id="share-modal">
-  <div class="modal">
-    <h3>Share My Research</h3>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6;">Enter the email address of someone you want to share with. They must also be signed in to view your research.</p>
-    <div class="form-group">
-      <label>Their Google Email</label>
-      <input type="email" id="share-email-input" placeholder="friend@gmail.com">
-    </div>
-    <div id="share-status" style="font-size:12px;color:var(--muted);margin-top:8px;min-height:18px"></div>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal('share-modal')">Cancel</button>
-      <button class="btn btn-primary" onclick="shareResearch()">Share</button>
-    </div>
-  </div>
-</div>
-
-<!-- User Menu Modal -->
-<div class="modal-overlay" id="user-menu-modal">
-  <div class="modal" style="width:300px">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
-      <img id="menu-avatar" src="" style="width:40px;height:40px;border-radius:50%">
-      <div>
-        <div style="font-weight:600;font-size:14px" id="menu-name"></div>
-        <div style="font-size:12px;color:var(--muted)" id="menu-email"></div>
-      </div>
-    </div>
-    <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.4px">Your Share ID</div>
-    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-family:var(--mono);font-size:11px;word-break:break-all;margin-bottom:16px" id="menu-uid"></div>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal('user-menu-modal')">Close</button>
-      <button class="btn btn-danger" style="opacity:1;background:var(--red-bg);color:var(--red);border:1px solid var(--red-bg);padding:7px 14px;border-radius:7px;font-size:12px;font-family:var(--font);cursor:pointer" onclick="signOut()">Sign Out</button>
-    </div>
-  </div>
-</div>
-
 <!-- ═══════════════════ MODALS ═══════════════════ -->
 
 <!-- Add Stock -->
@@ -1123,7 +1003,6 @@ function showPage(name, btn) {
   btn.classList.add('active');
   if (name === 'groups') renderGroupsPage();
   if (name === 'stockresearch') initResearchPage();
-  if (name === 'community') updateCommunityUI();
   if (name === 'dashboard') { setDashTab(dashTab); }
 
   if (name === 'research') initResearchPage();
@@ -2890,20 +2769,8 @@ async function loadChart(range) {
   document.querySelectorAll('.chart-range-btn').forEach(b => b.classList.toggle('active', b.textContent === range));
   ovChartRange = range;
 
-  // Use in-memory cache first (same overlay session)
+  // Use cached data if available
   if (ovCandles[range]) { requestAnimationFrame(() => drawChart(ovCandles[range], range)); return; }
-
-  // Check localStorage daily cache
-  const today = new Date().toISOString().slice(0, 10);
-  const cacheKey = `pt_chart_${ovTicker}_${range}`;
-  try {
-    const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
-    if (cached && cached.date === today && cached.data) {
-      ovCandles[range] = cached.data;
-      requestAnimationFrame(() => drawChart(cached.data, range));
-      return;
-    }
-  } catch(e) {}
 
   document.getElementById('ov-chart-loading').style.display = 'flex';
 
@@ -2918,6 +2785,7 @@ async function loadChart(range) {
     return;
   }
 
+  // Alpha Vantage: use TIME_SERIES_DAILY_ADJUSTED for ≤1Y, TIME_SERIES_WEEKLY_ADJUSTED for longer
   const useWeekly = ['3Y','5Y'].includes(range);
   const fn = useWeekly ? 'TIME_SERIES_WEEKLY_ADJUSTED' : 'TIME_SERIES_DAILY_ADJUSTED';
   const seriesKey = useWeekly ? 'Weekly Adjusted Time Series' : 'Time Series (Daily)';
@@ -2941,24 +2809,19 @@ async function loadChart(range) {
     const cutoffDays = { '1M':30, '3M':90, '6M':180, '1Y':365, '3Y':1095, '5Y':1825 };
     const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - cutoffDays[range]);
 
+    // Convert AV series to {t, c} arrays sorted oldest→newest
     const entries = Object.entries(series)
       .filter(([date]) => new Date(date) >= cutoff)
       .sort(([a],[b]) => a.localeCompare(b));
 
+    const closeKey = useWeekly ? '5. adjusted close' : '5. adjusted close';
     const converted = {
       s: entries.length ? 'ok' : 'no_data',
       t: entries.map(([d]) => Math.floor(new Date(d).getTime() / 1000)),
-      c: entries.map(([,v]) => parseFloat(v['5. adjusted close'] || v['4. close']) || 0)
+      c: entries.map(([,v]) => parseFloat(v[closeKey] || v['4. close']) || 0)
     };
 
-    if (converted.s === 'ok') {
-      ovCandles[range] = converted;
-      // Save to localStorage with today's date — auto-expires tomorrow
-      try {
-        localStorage.setItem(cacheKey, JSON.stringify({ date: today, data: converted }));
-      } catch(e) {} // ignore if storage full
-    }
-
+    if (converted.s === 'ok') ovCandles[range] = converted;
     document.getElementById('ov-chart-loading').style.display = 'none';
     requestAnimationFrame(() => drawChart(converted, range));
 
@@ -3061,279 +2924,6 @@ function fmtVol(n) {
   if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
   if (n >= 1e3) return (n/1e3).toFixed(1) + 'K';
   return n.toLocaleString();
-}
-
-
-// ═══════════════════════════════════════
-//  FIREBASE INIT
-// ═══════════════════════════════════════
-const firebaseConfig = {
-  apiKey: "AIzaSyC9f-rm-GQ617KfTxWOwU46zpyh50osHho",
-  authDomain: "portfolio-tracker-dce01.firebaseapp.com",
-  projectId: "portfolio-tracker-dce01",
-  storageBucket: "portfolio-tracker-dce01.firebasestorage.app",
-  messagingSenderId: "640434973496",
-  appId: "1:640434973496:web:a9cd2acb72755ae4bb6fcd"
-};
-
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db   = firebase.firestore();
-
-let currentUser = null;
-
-auth.onAuthStateChanged(async user => {
-  currentUser = user;
-  if (user) {
-    // Show user pill, hide sign-in button
-    document.getElementById('signin-btn').style.display = 'none';
-    const pill = document.getElementById('user-pill');
-    pill.style.display = 'flex';
-    document.getElementById('user-name').textContent = user.displayName?.split(' ')[0] || 'Me';
-    if (user.photoURL) {
-      const av = document.getElementById('user-avatar');
-      av.src = user.photoURL;
-      av.style.display = '';
-    }
-    // Sync data to Firestore
-    await syncToFirestore();
-    await loadFromFirestore();
-  } else {
-    document.getElementById('signin-btn').style.display = '';
-    document.getElementById('user-pill').style.display = 'none';
-  }
-  // Update community page if visible
-  updateCommunityUI();
-});
-
-function signInWithGoogle() {
-  const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider).catch(e => showToast('Sign in failed: ' + e.message));
-}
-
-function signOut() {
-  auth.signOut();
-  closeModal('user-menu-modal');
-  showToast('Signed out');
-}
-
-function openUserMenu() {
-  if (!currentUser) return;
-  document.getElementById('menu-avatar').src = currentUser.photoURL || '';
-  document.getElementById('menu-name').textContent = currentUser.displayName || '';
-  document.getElementById('menu-email').textContent = currentUser.email || '';
-  document.getElementById('menu-uid').textContent = currentUser.uid;
-  document.getElementById('user-menu-modal').classList.add('open');
-}
-
-// ── FIRESTORE SYNC ──
-async function syncToFirestore() {
-  if (!currentUser) return;
-  try {
-    const uid = currentUser.uid;
-    await db.collection('users').doc(uid).set({
-      holdings, groups, watchlist, stockOverrides, watchlistInRebal,
-      savedAnalyses, etfSnapshots, notes,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
-  } catch(e) { console.warn('Sync to Firestore failed:', e.message); }
-}
-
-async function loadFromFirestore() {
-  if (!currentUser) return;
-  try {
-    const doc = await db.collection('users').doc(currentUser.uid).get();
-    if (!doc.exists) return;
-    const data = doc.data();
-    if (data.holdings)        holdings        = data.holdings;
-    if (data.groups)          groups          = data.groups;
-    if (data.watchlist)       watchlist       = data.watchlist;
-    if (data.stockOverrides)  stockOverrides  = data.stockOverrides;
-    if (data.watchlistInRebal)watchlistInRebal= data.watchlistInRebal;
-    if (data.savedAnalyses)   savedAnalyses   = data.savedAnalyses;
-    if (data.etfSnapshots)    etfSnapshots    = data.etfSnapshots;
-    if (data.notes)           notes           = data.notes;
-    // Update localStorage + re-render
-    save(); saveResearchData();
-    renderDashboard();
-    showToast('✓ Portfolio loaded from cloud');
-  } catch(e) { console.warn('Load from Firestore failed:', e.message); }
-}
-
-// Override save() to also sync to Firestore
-const _originalSave = save;
-save = function() {
-  _originalSave();
-  if (currentUser) syncToFirestore();
-};
-
-// ── COMMUNITY PAGE ──
-function updateCommunityUI() {
-  const prompt  = document.getElementById('community-signin-prompt');
-  const content2 = document.getElementById('community-content');
-  const actions = document.getElementById('community-actions');
-  if (!prompt) return;
-  if (currentUser) {
-    prompt.style.display  = 'none';
-    content2.style.display = '';
-    actions.style.display  = 'flex';
-    document.getElementById('my-share-id-display').textContent = 'Your ID: ' + currentUser.uid.slice(0,12) + '…';
-    loadMyShares();
-    loadSharedWithMe();
-  } else {
-    prompt.style.display  = '';
-    content2.style.display = 'none';
-    actions.style.display  = 'none';
-  }
-}
-
-function openShareModal() {
-  document.getElementById('share-email-input').value = '';
-  document.getElementById('share-status').textContent = '';
-  document.getElementById('share-modal').classList.add('open');
-  document.getElementById('share-email-input').focus();
-}
-
-async function shareResearch() {
-  if (!currentUser) return;
-  const email = document.getElementById('share-email-input').value.trim().toLowerCase();
-  const status = document.getElementById('share-status');
-  if (!email || !email.includes('@')) { status.textContent = '⚠ Enter a valid email'; status.style.color = 'var(--red)'; return; }
-
-  status.innerHTML = '<span class="spinner-inline"></span> Sharing…';
-  status.style.color = 'var(--muted)';
-
-  try {
-    const shareId = currentUser.uid + '_' + Date.now();
-    await db.collection('shared').doc(shareId).set({
-      ownerId:    currentUser.uid,
-      ownerName:  currentUser.displayName || currentUser.email,
-      ownerEmail: currentUser.email,
-      sharedWithEmail: email,
-      sharedAt:   firebase.firestore.FieldValue.serverTimestamp(),
-      research: {
-        savedAnalyses,
-        etfSnapshots,
-        notes
-      }
-    });
-    status.textContent = `✓ Research shared with ${email}`;
-    status.style.color = 'var(--green)';
-    setTimeout(() => { closeModal('share-modal'); loadMyShares(); }, 1500);
-  } catch(e) {
-    status.textContent = '⚠ Error: ' + e.message;
-    status.style.color = 'var(--red)';
-  }
-}
-
-async function loadMyShares() {
-  if (!currentUser) return;
-  const wrap = document.getElementById('my-shares-list');
-  try {
-    const snap = await db.collection('shared').where('ownerId', '==', currentUser.uid).orderBy('sharedAt', 'desc').get();
-    if (snap.empty) {
-      wrap.innerHTML = '<div class="analysis-placeholder"><div class="big">📤</div><p>You haven't shared your research yet.</p></div>';
-      return;
-    }
-    wrap.innerHTML = snap.docs.map(doc => {
-      const d = doc.data();
-      const date = d.sharedAt?.toDate?.()?.toLocaleDateString() || 'Just now';
-      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
-        <div>
-          <div style="font-size:13px;font-weight:600">${d.sharedWithEmail}</div>
-          <div style="font-size:11px;color:var(--muted)">${date} · ${(d.research?.savedAnalyses?.length||0)} analyses · ${(d.research?.notes?.length||0)} notes</div>
-        </div>
-        <button class="btn-danger" onclick="revokeShare('${doc.id}')">Revoke</button>
-      </div>`;
-    }).join('');
-  } catch(e) { wrap.innerHTML = '<div style="padding:16px;color:var(--red);font-size:13px">⚠ ' + e.message + '</div>'; }
-}
-
-async function revokeShare(id) {
-  await db.collection('shared').doc(id).delete();
-  showToast('Share revoked');
-  loadMyShares();
-}
-
-async function loadSharedWithMe() {
-  if (!currentUser) return;
-  const wrap = document.getElementById('shared-with-me-list');
-  wrap.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted)"><span class="spinner-inline"></span> Loading…</div>';
-  try {
-    const email = currentUser.email.toLowerCase();
-    const snap  = await db.collection('shared').where('sharedWithEmail', '==', email).orderBy('sharedAt', 'desc').get();
-    if (snap.empty) {
-      wrap.innerHTML = '<div class="analysis-placeholder"><div class="big">📥</div><p>No research shared with you yet.</p></div>';
-      return;
-    }
-    wrap.innerHTML = snap.docs.map(doc => {
-      const d = doc.data();
-      const date = d.sharedAt?.toDate?.()?.toLocaleDateString() || '';
-      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
-        <div>
-          <div style="font-size:13px;font-weight:600">${d.ownerName || d.ownerEmail}</div>
-          <div style="font-size:11px;color:var(--muted)">${date} · ${(d.research?.savedAnalyses?.length||0)} analyses · ${(d.research?.notes?.length||0)} notes</div>
-        </div>
-        <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px" onclick="viewSharedResearch('${doc.id}')">View →</button>
-      </div>`;
-    }).join('');
-  } catch(e) { wrap.innerHTML = '<div style="padding:16px;color:var(--red);font-size:13px">⚠ ' + e.message + '</div>'; }
-}
-
-async function viewSharedResearch(docId) {
-  const panel = document.getElementById('shared-viewer');
-  const body  = document.getElementById('viewer-body');
-  body.innerHTML = '<div style="text-align:center;padding:20px"><span class="spinner-inline"></span> Loading…</div>';
-  panel.style.display = '';
-
-  try {
-    const doc  = await db.collection('shared').doc(docId).get();
-    const data = doc.data();
-    const r    = data.research || {};
-
-    document.getElementById('viewer-title').textContent = (data.ownerName || data.ownerEmail) + "'s Research";
-    document.getElementById('viewer-sub').textContent   = 'Shared on ' + (data.sharedAt?.toDate?.()?.toLocaleDateString() || '');
-
-    let html = '';
-
-    // Stock Analyses
-    if (r.savedAnalyses?.length) {
-      html += `<h4 style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--accent);margin-bottom:12px">📊 Stock Analyses (${r.savedAnalyses.length})</h4>`;
-      html += r.savedAnalyses.map(a => `
-        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:10px">
-          <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px">
-            <span class="ticker-badge">${a.ticker}</span>
-            <span style="font-size:12px;color:var(--muted)">${a.name}</span>
-            <span style="font-size:11px;color:var(--muted);margin-left:auto">${new Date(a.date).toLocaleDateString()}</span>
-          </div>
-          <div style="font-size:12px;color:var(--muted);line-height:1.6;white-space:pre-wrap">${a.markdown?.slice(0,400)}${a.markdown?.length > 400 ? '…' : ''}</div>
-        </div>`).join('');
-    }
-
-    // ETF Snapshots
-    if (r.etfSnapshots?.length) {
-      const names = [...new Set(r.etfSnapshots.map(s => s.name))];
-      html += `<h4 style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--accent);margin:16px 0 12px">📦 ETF Snapshots (${names.join(', ')})</h4>`;
-      html += `<p style="font-size:12px;color:var(--muted)">${r.etfSnapshots.length} snapshot${r.etfSnapshots.length !== 1 ? 's' : ''} across ${names.length} ETF${names.length !== 1 ? 's' : ''}</p>`;
-    }
-
-    // Notes
-    if (r.notes?.length) {
-      html += `<h4 style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--accent);margin:16px 0 12px">📝 Notes (${r.notes.length})</h4>`;
-      html += r.notes.map(n => `
-        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:10px">
-          <div style="font-weight:600;font-size:13px;margin-bottom:6px">${n.title}</div>
-          <div style="font-size:12px;color:var(--muted);line-height:1.6;white-space:pre-wrap">${n.body?.slice(0,300)}${n.body?.length > 300 ? '…' : ''}</div>
-        </div>`).join('');
-    }
-
-    if (!html) html = '<div class="analysis-placeholder"><div class="big">📭</div><p>No research content yet.</p></div>';
-    body.innerHTML = html;
-    panel.scrollIntoView({ behavior: 'smooth' });
-
-  } catch(e) {
-    body.innerHTML = '<div style="color:var(--red);padding:16px">⚠ ' + e.message + '</div>';
-  }
 }
 
 </script>
