@@ -1632,7 +1632,7 @@ function renderDashboard() {
         return sortDir === 'desc' ? pB - pA : pA - pB;
       });
     } else {
-      sorted.sort((a,b) => a.ticker.localeCompare(b.ticker));
+      sorted.sort((a,b) => (a.sortOrder ?? 999) !== (b.sortOrder ?? 999) ? (a.sortOrder ?? 999) - (b.sortOrder ?? 999) : a.ticker.localeCompare(b.ticker));
     }
     wrap.innerHTML = `<div class="table-scroll"><table>${COLS}<tbody>${sorted.map(h => stockRow(h, totalValue)).join('')}</tbody></table></div>`;
   } else {
@@ -1646,7 +1646,7 @@ function renderDashboard() {
 
     let html = `<table>${COLS_GRP}<tbody>`;
     orderedIds.forEach(gid => {
-      const gHoldings = holdings.filter(h => (h.groupId || UNGROUPED_ID) === gid).sort((a,b) => a.ticker.localeCompare(b.ticker));
+      const gHoldings = holdings.filter(h => (h.groupId || UNGROUPED_ID) === gid).sort((a,b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999));
       if (!gHoldings.length) return;
       const gValue = gHoldings.reduce((s, h) => s + (h.currentPrice || h.cost) * h.shares, 0);
       const gCost  = gHoldings.reduce((s, h) => s + h.cost * h.shares, 0);
@@ -2192,10 +2192,10 @@ function renderCardView() {
       const isFirst = i === 0;
       const isLast  = i === allStocks.length - 1;
 
-      // Edit action: use data attributes to avoid quote escaping issues in nested templates
-      const editFn   = s.held ? 'openEditModal' : 'openEditWatchGroupModal';
-      const editTitle = s.held ? 'Edit stock' : 'Change group';
-      const editBtn  = `<button class="btn-ghost" style="font-size:11px;padding:2px 5px" data-edit-ticker="${s.ticker}" data-edit-fn="${editFn}" onclick="event.stopPropagation();window[this.dataset.editFn](this.dataset.editTicker)" title="${editTitle}">✎</button>`;
+      // Edit action: build button with direct function call, no 'this' reference
+      const editBtn = s.held
+        ? `<button class="btn-ghost" style="font-size:11px;padding:2px 5px" onclick="event.stopPropagation();openEditModal('${s.ticker}')" title="Edit stock">✎</button>`
+        : `<button class="btn-ghost" style="font-size:11px;padding:2px 5px" onclick="event.stopPropagation();openEditWatchGroupModal('${s.ticker}')" title="Change group">✎</button>`;
 
       return `<div class="wl-stock-item"
         data-drag-ticker="${s.ticker}"
@@ -2302,7 +2302,7 @@ function renderFullView() {
     const allStocks = [
       ...gHoldings.map(h => ({ ...h, _held: true })),
       ...gWatchlist.map(w => ({ ...w, _held: false }))
-    ].sort((a,b) => a.ticker.localeCompare(b.ticker));
+    ].sort((a,b) => (a.sortOrder ?? 999) !== (b.sortOrder ?? 999) ? (a.sortOrder ?? 999) - (b.sortOrder ?? 999) : a.ticker.localeCompare(b.ticker));
 
     allStocks.forEach(s => {
       const indicator = s._held
@@ -2344,7 +2344,7 @@ function exportCSV() {
   if (!holdings.length) return;
   const totalValue = totalPortfolioValue();
   let csv = 'Ticker,Name,Group,Shares,Avg Cost,Current Price,Market Value,$ Gain,% Gain,% Portfolio\n';
-  [...holdings].sort((a,b) => a.ticker.localeCompare(b.ticker)).forEach(h => {
+  [...holdings].sort((a,b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999)).forEach(h => {
     const price = h.currentPrice || h.cost;
     const mktVal = price * h.shares;
     const gain = (price - h.cost) * h.shares;
