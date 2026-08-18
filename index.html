@@ -6,7 +6,7 @@
 <title>Portfolio Tracker</title>
 <style>
   :root {
-    --bg: #ffffff;
+    --bg: #f5f5f3;
     --surface: #ffffff;
     --surface2: #f0f0ee;
     --border: #e2e2de;
@@ -26,7 +26,7 @@
   body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; min-height: 100vh; }
 
   /* HEADER */
-  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
+  header { background: var(--surface); border-bottom: 1px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,0.06); padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
   .logo { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; color: var(--text); display: flex; align-items: center; gap: 8px; }
   .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; display: inline-block; }
   nav { display: flex; gap: 4px; }
@@ -43,7 +43,7 @@
 
   /* SUMMARY CARDS */
   .summary-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
   .card-label { font-size: 11px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
   .card-value { font-size: 22px; font-weight: 600; font-family: var(--mono); letter-spacing: -0.5px; color: var(--text); }
   .card-value.green { color: var(--green); }
@@ -56,8 +56,8 @@
   .view-toggle button.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
 
   /* TABLE */
-  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-  .table-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--border); gap: 12px; flex-wrap: wrap; }
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+  .table-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border); gap: 12px; flex-wrap: wrap; background: var(--surface2); }
   .toolbar-left { display: flex; align-items: center; gap: 12px; }
   .table-title { font-size: 13px; font-weight: 600; color: var(--text); }
   .toolbar-actions { display: flex; gap: 8px; align-items: center; }
@@ -115,8 +115,8 @@
 
   /* GROUPS PAGE */
   .groups-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin-bottom: 24px; }
-  .group-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-  .group-card-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  .group-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+  .group-card-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); background: var(--surface2); }
   .group-card-name { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
   .group-card-actions { display: flex; gap: 4px; }
   .group-card-stats { padding: 12px 16px; font-size: 12px; color: var(--muted); display: flex; gap: 16px; }
@@ -126,7 +126,7 @@
   /* MODALS */
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 200; align-items: center; justify-content: center; }
   .modal-overlay.open { display: flex; }
-  .modal { background: var(--surface); border-radius: 14px; padding: 28px 32px; width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto; }
+  .modal { background: var(--surface); border-radius: 14px; padding: 28px 32px; width: 400px; box-shadow: 0 8px 32px rgba(0,0,0,0.14); max-height: 90vh; overflow-y: auto; }
   .modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 20px; }
   .form-group { margin-bottom: 16px; }
   .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
@@ -141,7 +141,7 @@
 
   /* REBALANCER */
   .rebal-layout { display: grid; grid-template-columns: 1fr 380px; gap: 24px; align-items: start; }
-  .section-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+  .section-title { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
   .total-pct { font-family: var(--mono); font-size: 12px; padding: 4px 10px; border-radius: 5px; font-weight: 600; }
   .pct-ok { background: var(--green-bg); color: var(--green); }
   .pct-warn { background: #fef9c3; color: #854d0e; }
@@ -214,8 +214,8 @@
      RESEARCH PAGE
   ══════════════════════════════════════ */
   .research-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-  .research-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-  .research-card-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .research-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+  .research-card-header { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--surface2); }
   .research-card-title { font-size: 13px; font-weight: 600; color: var(--text); }
   .research-card-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
   .research-card-body { padding: 20px; }
@@ -295,8 +295,8 @@
 
   /* ── WATCHLIST CARD VIEW ── */
   .wl-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
-  .wl-group-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-  .wl-group-card-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .wl-group-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+  .wl-group-card-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--surface2); }
   .wl-group-card-name { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
   .wl-group-card-stocks { padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; }
   .wl-stock-item { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border); }
@@ -309,10 +309,10 @@
   /* ══════════════════════════════════════
      5G TIMELINE PAGE
   ══════════════════════════════════════ */
-  #page-timeline { padding: 0; max-width: 100%; background: #ffffff; min-height: calc(100vh - 56px); }
+  #page-timeline { padding: 0; max-width: 100%; background: var(--bg); min-height: calc(100vh - 56px); }
   #page-timeline.active { display: block; }
-  .tl-wrap { font-family: 'Courier New', Courier, monospace; background: #ffffff; color: #1a1a18; min-height: calc(100vh - 56px); max-width: 1280px; margin: 0 auto; padding: 0 32px; }
-  .tl-header { padding: 36px 28px 22px; border-bottom: 1px solid #e2e2de; }
+  .tl-wrap { font-family: 'Courier New', Courier, monospace; background: var(--bg); color: #1a1a18; min-height: calc(100vh - 56px); max-width: 1280px; margin: 0 auto; padding: 0 32px; }
+  .tl-header { padding: 36px 28px 22px; border-bottom: 1px solid #e2e2de; background: var(--surface); }
   .tl-eyebrow { font-size: 10px; letter-spacing: 0.3em; color: #9ca3af; text-transform: uppercase; margin-bottom: 8px; }
   .tl-h1 { margin: 0; font-size: clamp(18px, 3.5vw, 30px); font-weight: 700; letter-spacing: -0.02em; color: #1a1a18; line-height: 1.1; }
   .tl-sub { margin-top: 8px; color: #6b6b66; font-size: 12px; max-width: 520px; line-height: 1.6; }
@@ -320,8 +320,8 @@
   .tl-legend-label { font-size: 9px; color: #9ca3af; letter-spacing: 0.15em; text-transform: uppercase; white-space: nowrap; }
   .tl-legend-bar { flex: 1; height: 6px; border-radius: 3px; overflow: hidden; display: flex; }
   .tl-cards { padding: 16px 16px 0; }
-  .tl-gen-card { margin-bottom: 8px; border-radius: 8px; border: 1px solid #e2e2de; background: #f9f9f7; cursor: pointer; overflow: hidden; transition: border-color 0.2s, background 0.2s; }
-  .tl-gen-card.open { background: #f0f0ee; }
+  .tl-gen-card { margin-bottom: 8px; border-radius: 8px; border: 1px solid #e2e2de; background: #ffffff; cursor: pointer; overflow: hidden; transition: border-color 0.2s, background 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  .tl-gen-card.open { background: #f5f5f3; border-color: #d0d0cc; }
   .tl-card-row { display: grid; grid-template-columns: 48px 1fr auto; align-items: center; gap: 10px; padding: 12px 14px; }
   .tl-icon { font-size: 18px; text-align: center; }
   .tl-gen-id { font-size: 11px; font-weight: 700; text-align: center; }
@@ -465,7 +465,7 @@
 
 <!-- ═══════════════════ 5G TIMELINE ═══════════════════ -->
 <!-- ═══════════════════ MARKET RESEARCH ═══════════════════ -->
-<div class="page" id="page-research" style="padding:0;max-width:100%">
+<div class="page" id="page-research" style="padding:0;max-width:100%;background:var(--bg)">
 
   <!-- Inner tab bar -->
   <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;gap:4px;height:44px;position:sticky;top:56px;z-index:90;">
@@ -488,7 +488,7 @@
         <div class="tl-legend-bar" id="tl-legend-bar"></div>
         <span class="tl-legend-label">2 kbps → 1 Tbps</span>
       </div>
-      <div class="tl-footer" style="margin:0;border-radius:0;border-left:none;border-right:none;border-top:none;background:#ffffff;">
+      <div class="tl-footer" style="margin:0;border-radius:0;border-left:none;border-right:none;border-top:none;background:var(--surface);">
         <div class="tl-cat-legend-title">⛏️ Infrastructure Categories to evaluate</div>
         <div class="tl-cat-badges" id="tl-cat-badges"></div>
       </div>
@@ -505,13 +505,13 @@
 
 <!-- ═══════════════════ RESEARCH ═══════════════════ -->
 <div class="page" id="page-stockresearch">
-  <div style="padding:32px;max-width:1280px;margin:0 auto">
+  <div style="padding:16px 32px 32px;max-width:1280px;margin:0 auto">
 
     <!-- Sub-tabs -->
-    <div style="margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div style="margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
       <div>
-        <h2 style="font-size:18px;font-weight:600;margin-bottom:4px;">Research</h2>
-        <p style="font-size:13px;color:var(--muted);">Portfolio strategy, stock analysis, ETF tracking, and notes.</p>
+        <h2 style="font-size:16px;font-weight:600;margin-bottom:2px;">Research</h2>
+        <p style="font-size:12px;color:var(--muted);">Portfolio strategy, stock analysis, ETF tracking, and notes.</p>
       </div>
     </div>
     <div style="margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
@@ -3512,32 +3512,55 @@ function viewSavedShare(i) {
 }
 
 async function enrichAndRenderSharedViewer(data) {
-  renderSharedViewer(data); // render immediately with what we have
+  renderSharedViewer(data);
 
   if (!apiKey || !data.stocks?.length) return;
 
-  // Fetch company names for tickers we don't already know
   const body = document.getElementById('viewer-body');
   const statusEl = document.createElement('div');
   statusEl.style.cssText = 'font-size:11px;color:var(--muted);padding:8px 14px;display:flex;align-items:center;gap:6px';
-  statusEl.innerHTML = '<span class="spinner-inline"></span> Fetching company names…';
+  statusEl.innerHTML = '<span class="spinner-inline"></span> Fetching live data…';
   body.prepend(statusEl);
 
-  // Batch fetch profiles — respect Finnhub rate limit (60/min free)
   const enriched = await Promise.all(data.stocks.map(async s => {
-    // Check if we already have the name in our own holdings/watchlist
+    // Use cached local data if available
     const local = holdings.find(h => h.ticker === s.ticker) || watchlist.find(w => w.ticker === s.ticker);
-    if (local?.companyName) return { ...s, name: local.companyName };
+    if (local?.companyName && local?.currentPrice && local?.marketCap) {
+      return {
+        ...s,
+        name: local.companyName, price: local.currentPrice,
+        changePercent: local.changePercent ?? null,
+        marketCap: local.marketCap || null,
+        pe: local.pe || null,
+        week52High: local.week52High || null,
+        week52Low: local.week52Low || null,
+      };
+    }
     try {
-      const res  = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${s.ticker}&token=${apiKey}`);
-      const prof = await res.json();
-      return { ...s, name: prof.name || s.ticker };
+      const [profRes, quoteRes, metricRes] = await Promise.all([
+        fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${s.ticker}&token=${apiKey}`),
+        fetch(`https://finnhub.io/api/v1/quote?symbol=${s.ticker}&token=${apiKey}`),
+        fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${s.ticker}&metric=all&token=${apiKey}`)
+      ]);
+      const prof   = await profRes.json();
+      const quote  = await quoteRes.json();
+      const metric = await metricRes.json();
+      const m = metric.metric || {};
+      return {
+        ...s,
+        name:          prof.name || s.ticker,
+        price:         quote.c || null,
+        changePercent: quote.dp ?? null,
+        marketCap:     prof.marketCapitalization ? prof.marketCapitalization * 1e6 : null,
+        pe:            m.peBasicExclExtraTTM || null,
+        week52High:    m['52WeekHigh'] || null,
+        week52Low:     m['52WeekLow']  || null,
+      };
     } catch(e) {
-      return { ...s, name: s.ticker };
+      return { ...s, name: local?.companyName || s.ticker };
     }
   }));
 
-  // Save enriched names back to the share entry so future opens are instant
   data.stocks = enriched;
   if (currentViewingId !== null && savedShares[currentViewingId]) {
     savedShares[currentViewingId].stocks = enriched;
@@ -3600,6 +3623,7 @@ function updateCommunityUI() {
 }
 
 let sharedViewFilter = 'all';
+let sharedViewMode   = 'list'; // 'list' | 'category'
 let currentViewingData = null;
 
 function filterSharedView(f) {
@@ -3611,9 +3635,19 @@ function filterSharedView(f) {
   if (currentViewingData) renderSharedViewerBody(currentViewingData);
 }
 
+function setSharedViewMode(m) {
+  sharedViewMode = m;
+  const listBtn = document.getElementById('svm-list');
+  const catBtn  = document.getElementById('svm-cat');
+  if (listBtn) listBtn.classList.toggle('active', m === 'list');
+  if (catBtn)  catBtn.classList.toggle('active', m === 'category');
+  if (currentViewingData) renderSharedViewerBody(currentViewingData);
+}
+
 function renderSharedViewer(data) {
   currentViewingData = data;
   sharedViewFilter   = 'all';
+  sharedViewMode     = 'list';
   document.getElementById('viewer-title').textContent = (data.sharedBy || 'Unknown') + "'s Portfolio";
   document.getElementById('shared-viewer').style.display = '';
 
@@ -3624,18 +3658,24 @@ function renderSharedViewer(data) {
   document.getElementById('viewer-sub').textContent =
     'Shared ' + new Date(data.sharedAt).toLocaleDateString() + ' · ' + heldN + ' held · ' + watchN + ' watching';
 
-  // Add filter toggle to viewer header
+  // Build controls: status filter + view mode toggle
   const existing = document.getElementById('shared-view-filter-wrap');
   if (existing) existing.remove();
   const header = document.querySelector('#shared-viewer .research-card-header');
   if (header) {
     const wrap = document.createElement('div');
     wrap.id = 'shared-view-filter-wrap';
-    wrap.className = 'view-toggle';
+    wrap.style.cssText = 'display:flex;align-items:center;gap:8px;flex-wrap:wrap';
     wrap.innerHTML =
-      '<button class="active" id="svf-all"      onclick="filterSharedView(&quot;all&quot;)">All (' + stocks.length + ')</button>' +
-      '<button                id="svf-held"     onclick="filterSharedView(&quot;held&quot;)">&#x25CF; Held (' + heldN + ')</button>' +
-      '<button                id="svf-watching" onclick="filterSharedView(&quot;watching&quot;)">&#x25CF; Watching (' + watchN + ')</button>';
+      '<div class="view-toggle">' +
+        '<button class="active" id="svf-all"      onclick="filterSharedView(&quot;all&quot;)">All (' + stocks.length + ')</button>' +
+        '<button                id="svf-held"     onclick="filterSharedView(&quot;held&quot;)">&#x25CF; Held (' + heldN + ')</button>' +
+        '<button                id="svf-watching" onclick="filterSharedView(&quot;watching&quot;)">&#x25CF; Watching (' + watchN + ')</button>' +
+      '</div>' +
+      '<div class="view-toggle">' +
+        '<button class="active" id="svm-list" onclick="setSharedViewMode(&quot;list&quot;)">≡ List</button>' +
+        '<button                id="svm-cat"  onclick="setSharedViewMode(&quot;category&quot;)">⊞ By Sector</button>' +
+      '</div>';
     header.appendChild(wrap);
   }
 
@@ -3644,8 +3684,8 @@ function renderSharedViewer(data) {
 }
 
 function renderSharedViewerBody(data) {
-  const stocks   = data.stocks || [];
-  const body     = document.getElementById('viewer-body');
+  const stocks = data.stocks || [];
+  const body   = document.getElementById('viewer-body');
   if (!stocks.length) {
     body.innerHTML = '<div class="analysis-placeholder"><div class="big">📭</div><p>No stocks in this share.</p></div>';
     return;
@@ -3655,25 +3695,83 @@ function renderSharedViewerBody(data) {
     body.innerHTML = '<div class="analysis-placeholder"><div class="big">🔍</div><p>No stocks match this filter.</p></div>';
     return;
   }
-  const rows = filtered.map(s => {
-    const isHeld = s.status === 'held';
-    const color  = isHeld ? 'var(--green)' : 'var(--accent)';
-    const label  = isHeld ? 'Held' : 'Watching';
-    return '<tr style="border-bottom:1px solid var(--border)">' +
-      '<td style="padding:10px 14px"><span class="ticker-badge">' + s.ticker + '</span></td>' +
-      '<td style="padding:10px 14px;font-size:12px;color:var(--muted)">' + (s.name || '—') + '</td>' +
-      '<td style="padding:10px 14px;text-align:center"><span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:' + color + '">' +
-        '<span style="width:8px;height:8px;border-radius:50%;background:' + color + ';flex-shrink:0"></span>' + label +
-      '</span></td>' +
-    '</tr>';
+
+  const th  = 'padding:7px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--border);white-space:nowrap';
+  const thr = th + ';text-align:right';
+  const thc = th + ';text-align:center';
+  const td  = 'padding:9px 10px;font-size:11px;';
+
+  const makeRow = s => {
+    const isHeld   = s.status === 'held';
+    const color    = isHeld ? 'var(--green)' : 'var(--accent)';
+    const label    = isHeld ? 'Held' : 'Watching';
+    const priceStr = s.price ? fmt(s.price) : '—';
+    const chgStr   = s.changePercent != null
+      ? (s.changePercent >= 0
+          ? '<span class="pill-green">+' + s.changePercent.toFixed(2) + '%</span>'
+          : '<span class="pill-red">'   + s.changePercent.toFixed(2) + '%</span>')
+      : '—';
+    const capStr   = s.marketCap ? fmtCap(s.marketCap) : '—';
+    const peStr    = s.pe ? s.pe.toFixed(1) : '—';
+    const rangeStr = (s.week52Low && s.week52High)
+      ? '$' + s.week52Low.toFixed(0) + ' – $' + s.week52High.toFixed(0) : '—';
+    return '<tr style="border-bottom:1px solid var(--border);cursor:pointer" onclick="openStockOverlay(\'' + s.ticker + '\')">' +
+      '<td style="' + td + '"><span class="ticker-badge" style="font-size:11px;padding:2px 6px">' + s.ticker + '</span></td>' +
+      '<td style="' + td + 'color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (s.name || '—') + '</td>' +
+      '<td style="' + td + 'font-family:var(--mono);text-align:right">' + priceStr + '</td>' +
+      '<td style="' + td + 'text-align:right">' + chgStr + '</td>' +
+      '<td style="' + td + 'font-family:var(--mono);text-align:right">' + capStr + '</td>' +
+      '<td style="' + td + 'font-family:var(--mono);text-align:right">' + peStr + '</td>' +
+      '<td style="' + td + 'font-family:var(--mono);text-align:right;white-space:nowrap">' + rangeStr + '</td>' +
+      '<td style="' + td + 'text-align:center"><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:' + color + '">' +
+        '<span style="width:7px;height:7px;border-radius:50%;background:' + color + ';flex-shrink:0"></span>' + label +
+      '</span></td></tr>';
+  };
+
+  const thead = '<thead><tr>' +
+    '<th style="' + th  + '">Ticker</th>' +
+    '<th style="' + th  + '">Company</th>' +
+    '<th style="' + thr + '">Price</th>' +
+    '<th style="' + thr + '">Today</th>' +
+    '<th style="' + thr + '">Mkt Cap</th>' +
+    '<th style="' + thr + '">P/E</th>' +
+    '<th style="' + thr + '">52wk Range</th>' +
+    '<th style="' + thc + '">Status</th>' +
+  '</tr></thead>';
+
+  if (sharedViewMode === 'list') {
+    body.innerHTML = '<div class="table-wrap"><table style="width:100%;border-collapse:collapse">' +
+      thead + '<tbody>' + filtered.map(makeRow).join('') + '</tbody></table></div>';
+    return;
+  }
+
+  // ── Category (sector) view ──
+  const hasSectors = filtered.some(s => s.sector);
+  if (!hasSectors) {
+    // Sectors not yet enriched — show a nudge
+    body.innerHTML = '<div class="analysis-placeholder"><div class="big">⏳</div><p>Sector data loads after enrichment.<br>It appears once you click View on a saved share and wait for the spinner.</p></div>';
+    return;
+  }
+
+  const byCategory = {};
+  filtered.forEach(s => {
+    const cat = s.sector || 'Other';
+    if (!byCategory[cat]) byCategory[cat] = [];
+    byCategory[cat].push(s);
+  });
+
+  const sortedCats = Object.keys(byCategory).sort();
+  body.innerHTML = sortedCats.map(cat => {
+    const items = byCategory[cat];
+    return '<div style="margin-bottom:20px">' +
+      '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);padding:8px 0 6px;display:flex;align-items:center;gap:8px">' +
+        '<span style="width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block"></span>' +
+        cat + ' <span style="font-weight:400;color:var(--border)">(' + items.length + ')</span>' +
+      '</div>' +
+      '<div class="table-wrap"><table style="width:100%;border-collapse:collapse">' +
+        thead + '<tbody>' + items.map(makeRow).join('') + '</tbody></table></div>' +
+    '</div>';
   }).join('');
-  const thStyle = 'padding:8px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--border)';
-  body.innerHTML = '<div class="table-wrap"><table style="width:100%;border-collapse:collapse">' +
-    '<thead><tr>' +
-      '<th style="' + thStyle + '">Ticker</th>' +
-      '<th style="' + thStyle + '">Company</th>' +
-      '<th style="' + thStyle + ';text-align:center">Status</th>' +
-    '</tr></thead><tbody>' + rows + '</tbody></table></div>';
 }
 </script>
 <div class="toast" id="toast"></div>
