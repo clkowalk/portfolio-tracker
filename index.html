@@ -283,6 +283,19 @@
   .chart-canvas-wrap { padding:16px; position:relative; height:220px; }
   .chart-loading { display:flex; align-items:center; justify-content:center; height:220px; color:var(--muted); font-size:13px; }
   @media (max-width:600px) { .stock-stats-grid { grid-template-columns:repeat(2,1fr); } }
+
+  /* ── WATCHLIST CARD VIEW ── */
+  .wl-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+  .wl-group-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .wl-group-card-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .wl-group-card-name { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
+  .wl-group-card-stocks { padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; }
+  .wl-stock-item { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border); }
+  .wl-stock-item:last-child { border-bottom: none; }
+  .wl-stock-name { font-size: 12px; color: var(--muted); margin-left: 6px; }
+  .wl-stock-held { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; color: var(--green); }
+  .wl-edit-group-select { font-size: 11px; padding: 3px 6px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface); color: var(--text); font-family: var(--font); outline: none; cursor: pointer; }
+  .wl-edit-group-select:focus { border-color: var(--accent); }
   /* ══════════════════════════════════════
      5G TIMELINE PAGE
   ══════════════════════════════════════ */
@@ -396,34 +409,40 @@
   </div>
 
   <!-- Dashboard inner tab toggle -->
-  <div style="margin-bottom:20px;">
+  <div style="margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
     <div class="view-toggle">
       <button class="active" id="dash-btn-holdings" onclick="setDashTab('holdings')">Holdings</button>
       <button id="dash-btn-rebal" onclick="setDashTab('rebal')">Rebalancer</button>
+    </div>
+    <div id="dash-holdings-controls" style="display:flex;align-items:center;gap:8px;">
+      <div class="view-toggle">
+        <button class="active" id="port-view-btn-cards" onclick="setPortfolioView('cards')">⊞ Cards</button>
+        <button id="port-view-btn-table" onclick="setPortfolioView('table')">≡ Expanded</button>
+      </div>
+      <button class="btn btn-secondary" style="padding:5px 12px;font-size:12px" onclick="refreshPrices()">↻ Refresh Prices</button>
+      <button class="btn btn-primary" onclick="openAddModal()">+ Add Stock</button>
     </div>
   </div>
 
   <!-- Holdings tab -->
   <div id="dash-holdings-wrap">
-    <div class="table-wrap">
-      <div class="table-toolbar">
-        <div class="toolbar-left">
-          <span class="table-title">Holdings</span>
-          <div class="view-toggle">
-            <button class="active" id="view-btn-all" onclick="setView('all')">All Stocks</button>
-            <button id="view-btn-group" onclick="setView('group')">By Group</button>
+    <!-- Card view -->
+    <div id="port-cards-wrap"></div>
+
+    <!-- Table view -->
+    <div id="port-table-wrap" style="display:none">
+      <div class="table-wrap">
+        <div class="table-toolbar">
+          <div class="toolbar-left">
+            <span class="table-title">Holdings</span>
+            <div class="view-toggle">
+              <button class="active" id="view-btn-all" onclick="setView('all')">All Stocks</button>
+              <button id="view-btn-group" onclick="setView('group')">By Group</button>
+            </div>
           </div>
         </div>
-        <div class="toolbar-actions">
-          <div class="refresh-row" style="margin:0">
-            <span class="status-dot" id="status-dot"></span>
-            <span id="status-text">Ready</span>
-            <button class="btn btn-secondary" style="padding:5px 12px;font-size:12px" onclick="refreshPrices()">↻ Refresh Prices</button>
-          </div>
-          <button class="btn btn-primary" onclick="openAddModal()">+ Add Stock</button>
-        </div>
+        <div id="holdings-table-wrap"></div>
       </div>
-      <div id="holdings-table-wrap"></div>
     </div>
   </div>
 
@@ -525,34 +544,31 @@
         <h2 style="font-size:18px;font-weight:600;margin-bottom:4px;">Research</h2>
         <p style="font-size:13px;color:var(--muted);">Portfolio strategy, stock analysis, ETF tracking, and notes.</p>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-secondary" id="rsch-refresh-btn" onclick="refreshWatchlistPrices()" style="display:none;font-size:11px;">↻ Refresh</button>
-        <button class="btn btn-primary" id="rsch-add-watch-btn" onclick="openAddWatchModal()" style="display:none;font-size:11px;">+ Add to Watchlist</button>
-      </div>
     </div>
-    <div style="margin-bottom:20px;">
+    <div style="margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
       <div class="view-toggle">
-        <button class="active" id="rsch-btn-full" onclick="setResearchSubTab('full')">Full View</button>
-        <button id="rsch-btn-watch" onclick="setResearchSubTab('watch')">Watchlist</button>
+        <button class="active" id="rsch-btn-full" onclick="setResearchSubTab('full')">Watchlist</button>
         <button id="rsch-btn-stock" onclick="setResearchSubTab('stock')">📊 Stock Analysis</button>
         <button id="rsch-btn-etf" onclick="setResearchSubTab('etf')">📦 ETF Tracker</button>
         <button id="rsch-btn-notes" onclick="setResearchSubTab('notes')">📝 Notepad</button>
+      </div>
+      <div id="wl-view-controls" style="display:flex;align-items:center;gap:8px;">
+        <div class="view-toggle">
+          <button class="active" id="wl-view-btn-cards" onclick="setWatchlistView('cards')">⊞ Cards</button>
+          <button id="wl-view-btn-table" onclick="setWatchlistView('table')">≡ Expanded</button>
+        </div>
+        <button class="btn btn-secondary" id="rsch-refresh-btn" onclick="refreshWatchlistPrices()" style="font-size:11px;">↻ Refresh</button>
+        <button class="btn btn-primary" id="rsch-add-watch-btn" onclick="openAddWatchModal()" style="font-size:11px;">+ Add to Watchlist</button>
       </div>
     </div>
 
     <!-- ── FULL VIEW ── -->
     <div id="rsch-full">
-      <div id="rsch-full-inner"></div>
+      <div id="rsch-full-cards"></div>
+      <div id="rsch-full-inner" style="display:none"></div>
     </div>
 
-    <!-- ── WATCHLIST ── -->
-    <div id="rsch-watch" style="display:none">
-      <div class="table-wrap">
-        <div id="watchlist-table-wrap"></div>
-      </div>
-    </div>
-
-    <!-- ── STOCK ANALYSIS ── -->
+<!-- ── STOCK ANALYSIS ── -->
     <div id="rsch-stock" style="display:none">
       <div class="research-layout">
         <!-- Left: input + output -->
@@ -602,13 +618,13 @@
         <div class="research-card-header">
           <div>
             <div class="research-card-title">Add ETF Snapshot</div>
-            <div class="research-card-sub">Auto-fetch holdings via FMP API, or paste manually</div>
+            <div class="research-card-sub">Auto-fetch top 10 holdings via Alpha Vantage</div>
           </div>
           <button class="btn btn-secondary" onclick="clearETF()" style="font-size:11px">Clear all data</button>
         </div>
         <div class="research-card-body">
           <!-- Auto-fetch row -->
-          <div style="background:var(--accent-light);border:1px solid #bfdbfe;border-radius:8px;padding:14px 16px;margin-bottom:16px;">
+          <div style="background:var(--accent-light);border:1px solid #bfdbfe;border-radius:8px;padding:14px 16px;">
             <div style="font-size:11px;font-weight:600;color:var(--accent);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.4px;">⚡ Auto-fetch from Alpha Vantage</div>
             <div class="etf-input-row">
               <input type="text" id="etf-name-input" placeholder="ETF ticker (e.g. VGT)" style="text-transform:uppercase;width:180px">
@@ -617,11 +633,6 @@
             </div>
             <div id="etf-fetch-status" style="font-size:11px;color:var(--muted);margin-top:6px;">Requires Alpha Vantage API key — set in ⚙ Settings</div>
           </div>
-
-          <!-- Manual entry -->
-          <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px;">Or paste manually — TICKER, Weight% per line</div>
-          <textarea class="etf-holdings-input" id="etf-holdings-input" placeholder="AAPL, 22.5&#10;MSFT, 18.3&#10;NVDA, 14.1&#10;AVGO, 6.8&#10;ORCL, 5.2&#10;AMAT, 4.1&#10;AMD, 3.8&#10;QCOM, 3.2&#10;NOW, 2.9&#10;PANW, 2.7"></textarea>
-          <button class="btn btn-secondary" style="margin-top:10px;width:100%" onclick="saveETFSnapshot()">Save Manual Snapshot</button>
         </div>
       </div>
 
@@ -1099,6 +1110,9 @@ function setDashTab(tab) {
   document.getElementById('dash-btn-rebal').classList.toggle('active', tab === 'rebal');
   document.getElementById('dash-holdings-wrap').style.display = tab === 'holdings' ? '' : 'none';
   document.getElementById('dash-rebal-wrap').style.display   = tab === 'rebal'    ? '' : 'none';
+  const holdCtrl = document.getElementById('dash-holdings-controls');
+  if (holdCtrl) holdCtrl.style.display = tab === 'holdings' ? 'flex' : 'none';
+  if (tab === 'holdings') { if (portfolioView === 'cards') renderPortfolioCardView(); }
   if (tab === 'rebal') renderRebalancer();
 }
 
@@ -1343,9 +1357,128 @@ async function refreshPrices() {
   document.getElementById('market-note').textContent = 'live via Finnhub';
 }
 
-function setStatus(type, msg) {
-  document.getElementById('status-dot').className = 'status-dot' + (type === 'loading' ? ' loading' : '');
-  document.getElementById('status-text').textContent = msg;
+function setStatus(type, msg) { /* status indicator removed */ }
+
+
+
+// ═══════════════════════════════════════
+//  STOCK ORDERING WITHIN GROUPS
+// ═══════════════════════════════════════
+function moveHolding(ticker, direction) {
+  const gid = holdings.find(h => h.ticker === ticker)?.groupId || UNGROUPED_ID;
+  const gStocks = holdings
+    .map((h, i) => ({ ...h, _idx: i }))
+    .filter(h => (h.groupId || UNGROUPED_ID) === gid)
+    .sort((a,b) => (a.sortOrder||0) - (b.sortOrder||0));
+
+  const pos = gStocks.findIndex(h => h.ticker === ticker);
+  if (direction === 'up'   && pos === 0) return;
+  if (direction === 'down' && pos === gStocks.length - 1) return;
+
+  const swapPos = direction === 'up' ? pos - 1 : pos + 1;
+  // Swap sortOrder values
+  const aIdx = holdings.findIndex(h => h.ticker === gStocks[pos].ticker);
+  const bIdx = holdings.findIndex(h => h.ticker === gStocks[swapPos].ticker);
+  const tmpOrder = holdings[aIdx].sortOrder ?? pos;
+  holdings[aIdx].sortOrder = holdings[bIdx].sortOrder ?? swapPos;
+  holdings[bIdx].sortOrder = tmpOrder;
+  save();
+  renderPortfolioCardView();
+}
+
+function moveWatchlistItem(ticker, direction) {
+  const gid = watchlist.find(w => w.ticker === ticker)?.groupId || UNGROUPED_ID;
+  const gItems = watchlist
+    .filter(w => (w.groupId || UNGROUPED_ID) === gid)
+    .sort((a,b) => (a.sortOrder||0) - (b.sortOrder||0));
+
+  const pos = gItems.findIndex(w => w.ticker === ticker);
+  if (direction === 'up'   && pos === 0) return;
+  if (direction === 'down' && pos === gItems.length - 1) return;
+
+  const swapPos = direction === 'up' ? pos - 1 : pos + 1;
+  const aIdx = watchlist.findIndex(w => w.ticker === gItems[pos].ticker);
+  const bIdx = watchlist.findIndex(w => w.ticker === gItems[swapPos].ticker);
+  const tmpOrder = watchlist[aIdx].sortOrder ?? pos;
+  watchlist[aIdx].sortOrder = watchlist[bIdx].sortOrder ?? swapPos;
+  watchlist[bIdx].sortOrder = tmpOrder;
+  save();
+  renderCardView();
+}
+
+// ═══════════════════════════════════════
+//  PORTFOLIO CARD / TABLE VIEW TOGGLE
+// ═══════════════════════════════════════
+let portfolioView = 'cards';
+
+function setPortfolioView(view) {
+  portfolioView = view;
+  document.getElementById('port-view-btn-cards').classList.toggle('active', view === 'cards');
+  document.getElementById('port-view-btn-table').classList.toggle('active', view === 'table');
+  document.getElementById('port-cards-wrap').style.display = view === 'cards' ? '' : 'none';
+  document.getElementById('port-table-wrap').style.display = view === 'table' ? '' : 'none';
+  if (view === 'cards') renderPortfolioCardView();
+}
+
+function renderPortfolioCardView() {
+  const wrap = document.getElementById('port-cards-wrap');
+  if (!wrap) return;
+
+  if (portfolioView === 'cards') { renderPortfolioCardView(); applyHide(); return; }
+  if (!holdings.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="big">📈</div><p>No stocks yet.<br>Click <strong>+ Add Stock</strong> to build your portfolio.</p></div>`;
+    return;
+  }
+
+  const totalValue = totalPortfolioValue();
+
+  // Group holdings
+  const allGroupIds = [...new Set(holdings.map(h => h.groupId || UNGROUPED_ID))];
+  const orderedIds = [
+    ...groups.map(g => g.id).filter(id => allGroupIds.includes(id)),
+    ...(allGroupIds.includes(UNGROUPED_ID) ? [UNGROUPED_ID] : [])
+  ];
+
+  wrap.innerHTML = `<div class="wl-cards-grid">${orderedIds.map(gid => {
+    const gHoldings = holdings.filter(h => (h.groupId || UNGROUPED_ID) === gid);
+    if (!gHoldings.length) return '';
+    const color = groupColor(gid);
+    const name  = groupName(gid);
+    const gValue = gHoldings.reduce((s, h) => s + (h.currentPrice || h.cost) * h.shares, 0);
+    const gPct   = totalValue ? (gValue / totalValue * 100).toFixed(1) : '0';
+
+    const sortedHoldings = [...gHoldings].sort((a,b) => (a.sortOrder??999) - (b.sortOrder??999));
+    const stockRows = sortedHoldings.map((h, i) => {
+      const price = h.currentPrice || h.cost;
+      const gainPct = ((price - h.cost) / h.cost * 100);
+      const gainColor = gainPct >= 0 ? 'var(--green)' : 'var(--red)';
+      const isFirst = i === 0, isLast = i === sortedHoldings.length - 1;
+      return `<div class="wl-stock-item">
+        <div style="display:flex;align-items:center;flex:1;min-width:0;gap:6px;cursor:pointer" onclick="openStockOverlay('${h.ticker}')">
+          <span class="ticker-badge" style="font-size:11px;padding:2px 6px;flex-shrink:0">${h.ticker}</span>
+          <span class="wl-stock-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.companyName || '—'}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+          <span style="font-size:11px;font-weight:600;color:${gainColor}">${gainPct >= 0 ? '+' : ''}${gainPct.toFixed(1)}%</span>
+          <button onclick="moveHolding('${h.ticker}','up')" style="background:none;border:none;cursor:${isFirst?'default':'pointer'};color:${isFirst?'var(--border)':'var(--muted)'};font-size:12px;padding:1px 3px;line-height:1" ${isFirst?'disabled':''}>▲</button>
+          <button onclick="moveHolding('${h.ticker}','down')" style="background:none;border:none;cursor:${isLast?'default':'pointer'};color:${isLast?'var(--border)':'var(--muted)'};font-size:12px;padding:1px 3px;line-height:1" ${isLast?'disabled':''}>▼</button>
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div class="wl-group-card">
+      <div class="wl-group-card-header">
+        <div class="wl-group-card-name">
+          <span class="group-color-dot" style="background:${color}"></span>${name}
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:12px;font-weight:600;font-family:var(--mono)">${gPct}%</div>
+          <div style="font-size:10px;color:var(--muted)">${gHoldings.length} stock${gHoldings.length!==1?'s':''}</div>
+        </div>
+      </div>
+      <div class="wl-group-card-stocks">${stockRows}</div>
+    </div>`;
+  }).join('')}</div>`;
 }
 
 // ═══════════════════════════════════════
@@ -1363,6 +1496,7 @@ function renderDashboard() {
   document.getElementById('group-count-sub').textContent = `across ${groups.length} group${groups.length !== 1 ? 's' : ''}`;
   updateSummary(totalValue, totalCost, totalGain, totalGainPct);
 
+  if (portfolioView === 'cards') { renderPortfolioCardView(); applyHide(); return; }
   if (!holdings.length) {
     wrap.innerHTML = `<div class="empty-state"><div class="big">📈</div><p>No stocks yet.<br>Click <strong>+ Add Stock</strong> to build your portfolio.</p></div>`;
     return;
@@ -1722,8 +1856,7 @@ async function addToWatchlist() {
   save();
   closeModal('add-watch-modal');
   if (apiKey) { await fetchWatchPrice(item); save(); }
-  renderWatchlistTab();
-  renderFullView();
+  renderBothWatchlistViews();
 }
 
 async function fetchWatchPrice(item) {
@@ -1803,7 +1936,6 @@ function removeWatchItem(ticker) {
   watchlist = watchlist.filter(w => w.ticker !== ticker);
   delete watchlistInRebal[ticker];
   save();
-  renderWatchlistTab();
   renderFullView();
 }
 
@@ -1817,8 +1949,7 @@ function moveToPortfolio(ticker) {
   watchlist = watchlist.filter(w => w.ticker !== ticker);
   delete watchlistInRebal[ticker];
   save();
-  renderWatchlistTab();
-  renderFullView();
+  renderBothWatchlistViews();
   renderDashboard();
 }
 
@@ -1867,10 +1998,25 @@ const INSIGHT_HEADERS = `<th class="num">Price</th><th class="num">Mkt Cap</th><
 function renderStrategyPage() { /* merged into Research page */ }
 
 // ── FULL VIEW: portfolio + watchlist, by group
-function renderFullView() {
-  const wrap = document.getElementById('rsch-full-inner');
 
-  // Combine holdings and toggled-in watchlist items into one list per group
+// ═══════════════════════════════════════
+//  WATCHLIST CARD / TABLE VIEW TOGGLE
+// ═══════════════════════════════════════
+let watchlistView = 'cards'; // 'cards' | 'table'
+
+function setWatchlistView(view) {
+  watchlistView = view;
+  document.getElementById('wl-view-btn-cards').classList.toggle('active', view === 'cards');
+  document.getElementById('wl-view-btn-table').classList.toggle('active', view === 'table');
+  document.getElementById('rsch-full-cards').style.display = view === 'cards' ? '' : 'none';
+  document.getElementById('rsch-full-inner').style.display = view === 'table' ? '' : 'none';
+  if (view === 'cards') renderCardView();
+  if (view === 'table') renderFullView();
+}
+
+function renderCardView() {
+  const wrap = document.getElementById('rsch-full-cards');
+
   const allGroupIds = [
     ...new Set([
       ...holdings.map(h => h.groupId || UNGROUPED_ID),
@@ -1883,15 +2029,105 @@ function renderFullView() {
   ];
 
   if (!orderedIds.length) {
-    wrap.innerHTML = `<div class="empty-state"><div class="big">📊</div><p>Add stocks on the Dashboard to see your full strategy view.</p></div>`;
+    wrap.innerHTML = `<div class="empty-state"><div class="big">📊</div><p>Add stocks on the Dashboard or watchlist.</p></div>`;
+    return;
+  }
+
+  const groupOptions = `<option value="${UNGROUPED_ID}">— Ungrouped —</option>` +
+    groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+
+  wrap.innerHTML = `<div class="wl-cards-grid">${orderedIds.map(gid => {
+    const gHoldings = holdings.filter(h => (h.groupId || UNGROUPED_ID) === gid);
+    const gWatchlist = watchlist.filter(w => (w.groupId || UNGROUPED_ID) === gid);
+    if (!gHoldings.length && !gWatchlist.length) return '';
+
+    const color = groupColor(gid);
+    const name  = groupName(gid);
+
+    const allStocks = [
+      ...gHoldings.map(h => ({ ticker: h.ticker, name: h.companyName || '', held: true,  sortOrder: h.sortOrder ?? 999 })),
+      ...gWatchlist.map(w => ({ ticker: w.ticker, name: w.companyName || '', held: false, sortOrder: w.sortOrder ?? 999 }))
+    ].sort((a,b) => a.sortOrder - b.sortOrder);
+
+    // Separate held vs watching for independent ordering
+    const heldItems  = allStocks.filter(s => s.held);
+    const watchItems = allStocks.filter(s => !s.held);
+    const orderedStocks = [...heldItems, ...watchItems];
+
+    const stockRows = orderedStocks.map((s, i) => {
+      const sameTypeItems = s.held ? heldItems : watchItems;
+      const posInType = sameTypeItems.findIndex(x => x.ticker === s.ticker);
+      const isFirst = posInType === 0;
+      const isLast  = posInType === sameTypeItems.length - 1;
+      const moveFn  = s.held ? 'moveHolding' : 'moveWatchlistItem';
+
+      const editDropdown = !s.held ? `
+        <select class="wl-edit-group-select" onchange="changeWatchlistGroup('${s.ticker}', this.value)" onclick="event.stopPropagation()">
+          ${groups.map(g => `<option value="${g.id}"${(watchlist.find(w=>w.ticker===s.ticker)?.groupId===g.id)?' selected':''}>${g.name}</option>`).join('')}
+          <option value="${UNGROUPED_ID}"${(!watchlist.find(w=>w.ticker===s.ticker)?.groupId||watchlist.find(w=>w.ticker===s.ticker)?.groupId===UNGROUPED_ID)?' selected':''}">Ungrouped</option>
+        </select>` : '';
+
+      return `<div class="wl-stock-item">
+        <div style="display:flex;align-items:center;flex:1;min-width:0;gap:6px;">
+          <span class="ticker-badge" style="font-size:11px;padding:2px 6px;flex-shrink:0">${s.ticker}</span>
+          <span class="wl-stock-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.name}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+          ${s.held
+            ? `<span class="wl-stock-held">● Held</span>`
+            : editDropdown
+          }
+          <button onclick="${moveFn}('${s.ticker}','up')" style="background:none;border:none;cursor:${isFirst?'default':'pointer'};color:${isFirst?'var(--border)':'var(--muted)'};font-size:12px;padding:1px 3px;line-height:1" ${isFirst?'disabled':''}>▲</button>
+          <button onclick="${moveFn}('${s.ticker}','down')" style="background:none;border:none;cursor:${isLast?'default':'pointer'};color:${isLast?'var(--border)':'var(--muted)'};font-size:12px;padding:1px 3px;line-height:1" ${isLast?'disabled':''}>▼</button>
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div class="wl-group-card">
+      <div class="wl-group-card-header">
+        <div class="wl-group-card-name">
+          <span class="group-color-dot" style="background:${color}"></span>${name}
+        </div>
+        <span style="font-size:11px;color:var(--muted)">${allStocks.length} stock${allStocks.length!==1?'s':''}</span>
+      </div>
+      <div class="wl-group-card-stocks">${stockRows || '<span style="font-size:12px;color:var(--muted)">No stocks</span>'}</div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function changeWatchlistGroup(ticker, newGroupId) {
+  const item = watchlist.find(w => w.ticker === ticker);
+  if (!item) return;
+  item.groupId = newGroupId;
+  save();
+  renderCardView(); // re-render to reflect new grouping
+  showToast(`${ticker} moved to ${groupName(newGroupId)}`);
+}
+
+function renderFullView() {
+  const wrap = document.getElementById('rsch-full-inner');
+
+  const allGroupIds = [
+    ...new Set([
+      ...holdings.map(h => h.groupId || UNGROUPED_ID),
+      ...watchlist.map(w => w.groupId || UNGROUPED_ID)
+    ])
+  ];
+  const orderedIds = [
+    ...groups.map(g => g.id).filter(id => allGroupIds.includes(id)),
+    ...(allGroupIds.includes(UNGROUPED_ID) ? [UNGROUPED_ID] : [])
+  ];
+
+  if (!orderedIds.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="big">📊</div><p>Add stocks on the Dashboard or watchlist to see your strategy view.</p></div>`;
     return;
   }
 
   let html = `<div style="overflow-x:auto"><table>
     <thead><tr>
-      <th>Ticker</th><th>Name</th><th>Status</th>
+      <th>Ticker</th><th>Name</th><th>Group</th>
       ${INSIGHT_HEADERS}
-      <th style="text-align:center">Rebalancer</th>
+      <th style="text-align:center">In Portfolio</th>
     </tr></thead><tbody>`;
 
   orderedIds.forEach(gid => {
@@ -1909,31 +2145,23 @@ function renderFullView() {
       <td style="text-align:center;background:var(--surface2)"></td>
     </tr>`;
 
-    // Portfolio holdings in this group
-    [...gHoldings].sort((a,b) => a.ticker.localeCompare(b.ticker)).forEach(h => {
-      html += `<tr class="insight-row" style="cursor:pointer" onclick="openStockOverlay('${h.ticker}')">
-        <td><span class="ticker-badge">${h.ticker}</span></td>
-        <td style="font-size:12px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.companyName || '—'}</td>
-        <td><span class="pill-green" style="font-size:10px">Held</span></td>
-        ${insightCols(h)}
-        <td style="text-align:center">—</td>
-      </tr>`;
-    });
+    // Merge held + watching, sort alphabetically
+    const allStocks = [
+      ...gHoldings.map(h => ({ ...h, _held: true })),
+      ...gWatchlist.map(w => ({ ...w, _held: false }))
+    ].sort((a,b) => a.ticker.localeCompare(b.ticker));
 
-    // Watchlist stocks in this group
-    [...gWatchlist].sort((a,b) => a.ticker.localeCompare(b.ticker)).forEach(w => {
-      const inRebal = watchlistInRebal[w.ticker] || false;
-      html += `<tr class="insight-row" style="cursor:pointer" onclick="openStockOverlay('${w.ticker}')">
-        <td><span class="ticker-badge">${w.ticker}</span></td>
-        <td style="font-size:12px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${w.companyName || '—'}</td>
-        <td><span class="watchlist-badge">Watching</span></td>
-        ${insightCols(w)}
-        <td style="text-align:center">
-          <label class="toggle-switch">
-            <input type="checkbox" ${inRebal ? 'checked' : ''} onchange="toggleWatchRebal('${w.ticker}', this.checked)">
-            <span class="toggle-slider"></span>
-          </label>
-        </td>
+    allStocks.forEach(s => {
+      const indicator = s._held
+        ? `<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--green)"><span style="width:9px;height:9px;border-radius:50%;background:var(--green);flex-shrink:0"></span>Held</span>`
+        : `<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--muted)"><span style="width:9px;height:9px;border-radius:50%;background:var(--border);flex-shrink:0"></span>Watching</span>`;
+
+      html += `<tr class="insight-row" style="cursor:pointer" onclick="openStockOverlay('${s.ticker}')">
+        <td><span class="ticker-badge">${s.ticker}</span></td>
+        <td style="font-size:12px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.companyName || '—'}</td>
+        <td><span class="group-badge" style="background:${color}18;color:${color}">${name}</span></td>
+        ${insightCols(s)}
+        <td style="text-align:center">${indicator}</td>
       </tr>`;
     });
   });
@@ -1942,46 +2170,13 @@ function renderFullView() {
   wrap.innerHTML = `<div class="table-scroll">${html}</div>`;
 }
 
-// ── WATCHLIST TAB (no % change columns)
-function renderWatchlistTab() {
-  const wrap = document.getElementById('watchlist-table-wrap');
-  if (!watchlist.length) {
-    wrap.innerHTML = `<div class="empty-state"><div class="big">👀</div><p>No stocks on your watchlist yet.<br>Click <strong>+ Add to Watchlist</strong> to start tracking.</p></div>`;
-    return;
-  }
-  let rows = '';
-  [...watchlist].sort((a,b) => a.ticker.localeCompare(b.ticker)).forEach(w => {
-    const color   = groupColor(w.groupId || UNGROUPED_ID);
-    const gname   = groupName(w.groupId || UNGROUPED_ID);
-    const inRebal = watchlistInRebal[w.ticker] || false;
-    rows += `<tr class="insight-row" style="cursor:pointer" onclick="openStockOverlay('${w.ticker}')">
-      <td><span class="ticker-badge">${w.ticker}</span></td>
-      <td style="font-size:12px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${w.companyName || '—'}</td>
-      <td><span class="group-badge" style="background:${color}18;color:${color}">${gname}</span></td>
-      ${insightCols(w)}
-      <td style="text-align:center">
-        <label class="toggle-switch">
-          <input type="checkbox" ${inRebal ? 'checked' : ''} onchange="toggleWatchRebal('${w.ticker}', this.checked)">
-          <span class="toggle-slider"></span>
-        </label>
-      </td>
-      <td style="white-space:nowrap;text-align:right">
-        <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px" onclick="moveToPortfolio('${w.ticker}')">→ Portfolio</button>
-        <button class="btn-danger" onclick="removeWatchItem('${w.ticker}')">✕</button>
-      </td>
-    </tr>`;
-  });
-  wrap.innerHTML = `<div class="table-scroll"><div style="overflow-x:auto"><table>
-    <thead><tr>
-      <th>Ticker</th><th>Name</th><th>Group</th>
-      ${INSIGHT_HEADERS}
-      <th style="text-align:center">Rebalancer</th>
-      <th></th>
-    </tr></thead>
-    <tbody>${rows}</tbody>
-  </table></div></div>`;
+function renderBothWatchlistViews() {
+  if (watchlistView === 'cards') renderCardView();
+  else renderFullView();
 }
 
+// renderWatchlistTab kept as stub for any legacy calls
+function renderWatchlistTab() { renderFullView(); }
 function toggleWatchRebal(ticker, checked) {
   watchlistInRebal[ticker] = checked;
   save();
@@ -2321,27 +2516,22 @@ function saveAnthropicKey() {
 }
 
 function initResearchPage() {
-  if (!researchSubTab) researchSubTab = 'full';
+  researchSubTab = 'full';
   setResearchSubTab(researchSubTab);
 }
 
 function setResearchSubTab(tab) {
   researchSubTab = tab;
-  const tabs = ['full','watch','stock','etf','notes'];
+  const tabs = ['full','stock','etf','notes'];
   tabs.forEach(t => {
     const btn = document.getElementById('rsch-btn-' + t);
     const div = document.getElementById('rsch-' + t);
     if (btn) btn.classList.toggle('active', t === tab);
     if (div) div.style.display = t === tab ? '' : 'none';
   });
-  // Show/hide action buttons for watchlist tab
-  const refreshBtn  = document.getElementById('rsch-refresh-btn');
-  const addWatchBtn = document.getElementById('rsch-add-watch-btn');
-  if (refreshBtn)  refreshBtn.style.display  = tab === 'watch' ? '' : 'none';
-  if (addWatchBtn) addWatchBtn.style.display = tab === 'watch' ? '' : 'none';
-
-  if (tab === 'full')  { renderFullView(); }
-  if (tab === 'watch') renderWatchlistTab();
+  const wlCtrl = document.getElementById('wl-view-controls');
+  if (wlCtrl) wlCtrl.style.display = tab === 'full' ? 'flex' : 'none';
+  if (tab === 'full')  { setWatchlistView(watchlistView); }
   if (tab === 'notes') renderNoteList();
   if (tab === 'etf')   renderETFSnapshots();
   if (tab === 'stock') renderSavedAnalyses();
@@ -3049,7 +3239,7 @@ function checkIncomingShare() {
     if (!banner) return;
     banner.style.display = '';
     document.getElementById('incoming-share-meta').textContent =
-      `From: ${data.sharedBy || 'Unknown'} · ${new Date(data.sharedAt).toLocaleDateString()} · ${(data.savedAnalyses||[]).length} analyses · ${(data.etfSnapshots||[]).length} ETF snapshots · ${(data.notes||[]).length} notes · ${(data.watchlist||[]).length} watchlist · ${(data.holdings||[]).length} holdings`;
+      `From: ${data.sharedBy || 'Unknown'} · ${new Date(data.sharedAt).toLocaleDateString()} · ${(data.watchlist||[]).length} watchlist stocks`;
 
     // Quick preview
     let preview = '';
@@ -3109,13 +3299,9 @@ function dismissIncomingShare() {
 // Generate a shareable link
 function generateShareLink() {
   const data = {
-    sharedBy:      'Me',
-    sharedAt:      new Date().toISOString(),
-    savedAnalyses,
-    etfSnapshots,
-    notes,
+    sharedBy:  'Me',
+    sharedAt:  new Date().toISOString(),
     watchlist,
-    holdings,
     groups
   };
 
@@ -3128,10 +3314,10 @@ function generateShareLink() {
 
   const kb = Math.round(encoded.length / 1024 * 10) / 10;
   document.getElementById('share-link-stats').textContent =
-    `Link size: ~${kb} KB · ${savedAnalyses.length} analyses · ${etfSnapshots.length} ETF snapshots · ${notes.length} notes · ${watchlist.length} watchlist · ${holdings.length} holdings`;
+    `Link size: ~${kb} KB · ${watchlist.length} watchlist stocks · ${groups.length} groups`;
 
   if (kb > 50) {
-    document.getElementById('share-link-stats').textContent += ' ⚠ Link may be too long for some email clients — try sharing fewer items';
+    document.getElementById('share-link-stats').textContent += ' ⚠ Link may be too long for some email clients';
   }
 }
 
@@ -3154,7 +3340,7 @@ function renderSavedShares() {
     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
       <div>
         <div style="font-size:13px;font-weight:600">${s.sharedBy || 'Unknown'}</div>
-        <div style="font-size:11px;color:var(--muted)">${new Date(s.sharedAt).toLocaleDateString()} · ${(s.savedAnalyses||[]).length} analyses · ${(s.etfSnapshots||[]).length} ETF snapshots · ${(s.notes||[]).length} notes · ${(s.watchlist||[]).length} watchlist · ${(s.holdings||[]).length} holdings</div>
+        <div style="font-size:11px;color:var(--muted)">${new Date(s.sharedAt).toLocaleDateString()} · ${(s.watchlist||[]).length} watchlist stocks</div>
       </div>
       <div style="display:flex;gap:6px;">
         <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px" onclick="viewSavedShare(${i})">View →</button>
