@@ -3596,9 +3596,9 @@ function renderSharedViewer(data) {
     wrap.id = 'shared-view-filter-wrap';
     wrap.className = 'view-toggle';
     wrap.innerHTML =
-      '<button class="active" id="svf-all"      onclick="filterSharedView('all')">All (' + stocks.length + ')</button>' +
-      '<button                id="svf-held"     onclick="filterSharedView('held')">● Held (' + heldN + ')</button>' +
-      '<button                id="svf-watching" onclick="filterSharedView('watching')">● Watching (' + watchN + ')</button>';
+      '<button class="active" id="svf-all"      onclick="filterSharedView(&quot;all&quot;)">All (' + stocks.length + ')</button>' +
+      '<button                id="svf-held"     onclick="filterSharedView(&quot;held&quot;)">&#x25CF; Held (' + heldN + ')</button>' +
+      '<button                id="svf-watching" onclick="filterSharedView(&quot;watching&quot;)">&#x25CF; Watching (' + watchN + ')</button>';
     header.appendChild(wrap);
   }
 
@@ -3638,3 +3638,22 @@ function renderSharedViewerBody(data) {
       '<th style="' + thStyle + ';text-align:center">Status</th>' +
     '</tr></thead><tbody>' + rows + '</tbody></table></div>';
 }
+</script>
+<div class="toast" id="toast"></div>
+
+<!-- Edit Watchlist Group Modal -->
+<div class="modal-overlay" id="edit-watch-group-modal">
+  <div class="modal" style="width:320px">
+    <h3>Edit Watchlist Stock — <span id="ewg-ticker"></span></h3>
+    <div class="form-group">
+      <label>Group</label>
+      <select id="ewg-select"></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('edit-watch-group-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditWatchGroup()">Save</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
