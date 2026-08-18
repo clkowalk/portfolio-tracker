@@ -918,20 +918,6 @@
 </div>
 
 <!-- Edit Watchlist Group -->
-<div class="modal-overlay" id="edit-watch-group-modal">
-  <div class="modal" style="width:320px">
-    <h3>Change Group — <span id="ewg-ticker"></span></h3>
-    <div class="form-group">
-      <label>Group</label>
-      <select id="ewg-select"></select>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal('edit-watch-group-modal')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveEditWatchGroup()">Save</button>
-    </div>
-  </div>
-</div>
-
 <!-- API Key -->
       <button class="settings-row" onclick="closeModal('settings-modal');openApiModal()">
         <span class="settings-icon">🔑</span>
@@ -3688,5 +3674,20 @@ function confirmPastedImport() {
 
 </script>
 <div class="toast" id="toast"></div>
+
+<!-- Edit Watchlist Group Modal -->
+<div class="modal-overlay" id="edit-watch-group-modal">
+  <div class="modal" style="width:320px">
+    <h3>Edit Watchlist Stock — <span id="ewg-ticker"></span></h3>
+    <div class="form-group">
+      <label>Group</label>
+      <select id="ewg-select"></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('edit-watch-group-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditWatchGroup()">Save</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
