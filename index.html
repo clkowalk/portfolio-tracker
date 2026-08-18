@@ -73,14 +73,14 @@
   .btn-danger:hover { opacity: 1; background: var(--red-bg); }
 
   table { width: 100%; border-collapse: collapse; }
-  thead th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); background: var(--surface2); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+  thead th { padding: 7px 8px; text-align: left; font-size: 10px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; color: var(--muted); background: var(--surface2); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; white-space: nowrap; }
   .table-scroll { overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 220px); }
   thead th.num { text-align: right; }
   tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
   tbody tr:last-child { border-bottom: none; }
   tbody tr:hover { background: #f7f7f5; }
-  td { padding: 11px 16px; font-size: 13px; }
-  td.num { text-align: right; font-family: var(--mono); font-size: 12px; }
+  td { padding: 8px 8px; font-size: 12px; }
+  td.num { text-align: right; font-family: var(--mono); font-size: 11px; }
 
   /* GROUP ROW */
   .group-header-row td { background: var(--surface2); font-weight: 600; font-size: 12px; padding: 8px 16px; border-bottom: 1px solid var(--border); border-top: 2px solid var(--border); }
@@ -1319,7 +1319,7 @@ async function fetchPrice(holding) {
     ]);
     const quote   = await quoteRes.json();
     const profile = await profileRes.json();
-    if (quote.c && quote.c > 0) holding.currentPrice = quote.c;
+    if (quote.c && quote.c > 0) { holding.currentPrice = quote.c; holding.changePercent = quote.dp ?? null; }
     if (profile.name) holding.companyName = profile.name;
   } catch(e) {}
 }
@@ -1575,19 +1575,18 @@ function renderDashboard() {
     <th class="th-sort ${sortCol==='name'?'sorted':''}" onclick="setSortCol('name')">Name <span class="sort-icon">${nameIcon}</span></th>
     <th>Group</th>
     <th class="num">Shares</th><th class="num">Avg Cost</th>
-    <th class="num">Price Today</th><th class="num">Market Value</th>
-    <th class="num th-sort ${sortCol==='gain'?'sorted':''}" onclick="setSortCol('gain')">$ Gain/Loss <span class="sort-icon">${gainIcon}</span></th>
-    <th class="num">% Gain/Loss</th>
-    <th class="num th-sort ${sortCol==='pct'?'sorted':''}" onclick="setSortCol('pct')">% of Portfolio <span class="sort-icon">${pctIcon}</span></th>
+    <th class="num">Price</th><th class="num">Today</th><th class="num">Mkt Val</th>
+    <th class="num th-sort ${sortCol==='gain'?'sorted':''}" onclick="setSortCol('gain')">$ G/L <span class="sort-icon">${gainIcon}</span></th>
+    <th class="num">% G/L</th>
+    <th class="num th-sort ${sortCol==='pct'?'sorted':''}" onclick="setSortCol('pct')">% Port <span class="sort-icon">${pctIcon}</span></th>
     <th></th>
   </tr></thead>`;
   const COLS_GRP = `<thead><tr>
     <th>Ticker</th><th>Name</th>
     <th class="num">Shares</th><th class="num">Avg Cost</th>
-    <th class="num">Price Today</th><th class="num">Market Value</th>
-    <th class="num">$ Gain/Loss</th>
-    <th class="num">% Gain/Loss</th>
-    <th class="num">% of Portfolio</th>
+    <th class="num">Price</th><th class="num">Today</th><th class="num">Mkt Val</th>
+    <th class="num">$ G/L</th><th class="num">% G/L</th>
+    <th class="num">% Port</th>
     <th></th>
   </tr></thead>`;
   const COLS = COLS_ALL;
@@ -1665,28 +1664,35 @@ function stockRow(h, totalValue, indent) {
   const gainHtml = gain >= 0
     ? `<span class="pill-green">+${fmt(gain)}</span>`
     : `<span class="pill-red">${fmt(gain)}</span>`;
+  const priceDisplay = h.currentPrice ? fmt(price) : `<span style="color:var(--muted);font-style:italic">${fmt(price)}</span>`;
+  const groupCell = indent ? `` : `<td><span class="group-badge" style="background:${color}18;color:${color}">${name}</span></td>`;
+
+  // Today's % change — stored as h.changePercent from Finnhub quote dp
+  const todayHtml = h.changePercent != null
+    ? (h.changePercent >= 0
+        ? `<span class="pill-green">+${h.changePercent.toFixed(2)}%</span>`
+        : `<span class="pill-red">${h.changePercent.toFixed(2)}%</span>`)
+    : `<span style="color:var(--muted)">—</span>`;
+
   const gainPctHtml = gainPct >= 0
-    ? `<span class="pill-green">+${gainPct.toFixed(2)}%</span>`
-    : `<span class="pill-red">${gainPct.toFixed(2)}%</span>`;
-  const priceDisplay = h.currentPrice ? fmt(price) : `<span style="color:var(--muted);font-style:italic">${fmt(price)} (cost)</span>`;
-  const groupCell = indent
-    ? ``
-    : `<td><span class="group-badge" style="background:${color}18;color:${color}">${name}</span></td>`;
+    ? `<span class="pill-green">+${gainPct.toFixed(1)}%</span>`
+    : `<span class="pill-red">${gainPct.toFixed(1)}%</span>`;
 
   return `<tr${indent ? ' class="rebal-stock-row"' : ''}>
-    <td><span class="ticker-badge">${h.ticker}</span></td>
-    <td style="font-size:12px;color:var(--muted);white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis">${h.companyName || '—'}</td>
+    <td style="padding:8px 10px"><span class="ticker-badge" style="font-size:11px;padding:2px 6px">${h.ticker}</span></td>
+    <td style="font-size:11px;color:var(--muted);white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;padding:8px 10px">${h.companyName || '—'}</td>
     ${groupCell}
-    <td class="num sens-shares">${h.shares.toLocaleString()}</td>
-    <td class="num">${fmt(h.cost)}</td>
-    <td class="num">${priceDisplay}</td>
-    <td class="num sens-mktval">${fmt(mktVal)}</td>
-    <td class="num sens-gain">${gainHtml}</td>
-    <td class="num">${gainPctHtml}</td>
-    <td><div class="bar-wrap"><div class="bar-track"><div class="bar-fill" style="width:${Math.min(portfolioPct,100)}%"></div></div><span class="pct-text">${portfolioPct.toFixed(1)}%</span></div></td>
-    <td style="white-space:nowrap">
-      <button class="btn-ghost" style="padding:4px 8px;font-size:12px" onclick="openEditModal('${h.ticker}')">✎</button>
-      <button class="btn-danger" onclick="removeStock('${h.ticker}')">✕</button>
+    <td class="num sens-shares" style="font-size:11px;padding:8px 8px">${h.shares.toLocaleString()}</td>
+    <td class="num" style="font-size:11px;padding:8px 8px">${fmt(h.cost)}</td>
+    <td class="num" style="font-size:11px;padding:8px 8px">${priceDisplay}</td>
+    <td class="num" style="font-size:11px;padding:8px 8px">${todayHtml}</td>
+    <td class="num sens-mktval" style="font-size:11px;padding:8px 8px">${fmt(mktVal)}</td>
+    <td class="num sens-gain" style="font-size:11px;padding:8px 8px">${gainHtml}</td>
+    <td class="num" style="font-size:11px;padding:8px 8px">${gainPctHtml}</td>
+    <td style="padding:8px 4px"><div class="bar-wrap"><div class="bar-track" style="width:44px"><div class="bar-fill" style="width:${Math.min(portfolioPct,100)}%"></div></div><span class="pct-text" style="font-size:11px;min-width:32px">${portfolioPct.toFixed(1)}%</span></div></td>
+    <td style="white-space:nowrap;padding:8px 6px">
+      <button class="btn-ghost" style="padding:3px 6px;font-size:11px" onclick="openEditModal('${h.ticker}')">✎</button>
+      <button class="btn-danger" style="font-size:11px" onclick="removeStock('${h.ticker}')">✕</button>
     </td>
   </tr>`;
 }
@@ -1996,7 +2002,7 @@ async function fetchWatchPrice(item) {
     const f = await fRes.json();
     const c = await cRes.json();
 
-    if (q.c && q.c > 0) item.currentPrice = q.c;
+    if (q.c && q.c > 0) { item.currentPrice = q.c; item.changePercent = q.dp ?? null; }
     if (p.name) item.companyName = p.name;
     if (p.marketCapitalization) item.marketCap = p.marketCapitalization * 1e6; // stored in millions
 
@@ -2103,14 +2109,20 @@ function week52Bar(item) {
 }
 
 function insightCols(item) {
+  const chg = item.changePercent != null
+    ? (item.changePercent >= 0
+        ? '<span class="pill-green">+' + item.changePercent.toFixed(2) + '%</span>'
+        : '<span class="pill-red">' + item.changePercent.toFixed(2) + '%</span>')
+    : '—';
   return `
-    <td class="num">${item.currentPrice ? fmt(item.currentPrice) : '<span style="color:var(--muted)">—</span>'}</td>
-    <td class="num">${fmtCap(item.marketCap)}</td>
-    <td class="num">${item.pe != null ? item.pe.toFixed(1) : '<span style="color:var(--muted)">—</span>'}</td>
-    <td class="num">${week52Bar(item)}</td>`;
+    <td class="num" style="font-size:11px;padding:8px 6px">${item.currentPrice ? fmt(item.currentPrice) : '—'}</td>
+    <td class="num" style="font-size:11px;padding:8px 6px">${chg}</td>
+    <td class="num" style="font-size:11px;padding:8px 6px">${fmtCap(item.marketCap)}</td>
+    <td class="num" style="font-size:11px;padding:8px 6px">${item.pe != null ? item.pe.toFixed(1) : '—'}</td>
+    <td class="num" style="font-size:11px;padding:8px 6px">${week52Bar(item)}</td>`;
 }
 
-const INSIGHT_HEADERS = `<th class="num">Price</th><th class="num">Mkt Cap</th><th class="num">P/E</th><th class="num">52wk Range</th>`;
+const INSIGHT_HEADERS = `<th class="num">Price</th><th class="num">Today</th><th class="num">Mkt Cap</th><th class="num">P/E</th><th class="num">52wk Range</th>`;
 
 // ── STRATEGY PAGE STATE
 
@@ -3378,18 +3390,18 @@ function checkIncomingShare() {
     const banner = document.getElementById('incoming-share-banner');
     if (!banner) return;
     banner.style.display = '';
+    const heldN    = (data.stocks||[]).filter(s=>s.status==='held').length;
+    const watchN   = (data.stocks||[]).filter(s=>s.status==='watching').length;
     document.getElementById('incoming-share-meta').textContent =
-      `From: ${data.sharedBy || 'Unknown'} · ${new Date(data.sharedAt).toLocaleDateString()} · ${(data.watchlist||[]).length} watchlist stocks`;
+      `From: ${data.sharedBy || 'Unknown'} · ${new Date(data.sharedAt).toLocaleDateString()} · ${heldN} held · ${watchN} watching`;
 
     // Quick preview
     let preview = '';
-    if (data.watchlist?.length) {
-      preview += `<div style="margin-bottom:8px;"><span style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.4px">👀 Watchlist</span><br>` +
-        data.watchlist.map(w => `<span class="ticker-badge" style="margin:2px">${w.ticker}</span>`).join('') + '</div>';
-    }
-    if (data.holdings?.length) {
-      preview += `<div style="margin-bottom:8px;"><span style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.4px">📈 Holdings</span><br>` +
-        data.holdings.map(h => `<span class="ticker-badge" style="margin:2px">${h.ticker}</span>`).join('') + '</div>';
+    if (data.stocks?.length) {
+      const heldTickers  = data.stocks.filter(s=>s.status==='held').map(s=>`<span class="ticker-badge" style="margin:2px">${s.ticker}</span>`).join('');
+      const watchTickers = data.stocks.filter(s=>s.status==='watching').map(s=>`<span class="ticker-badge" style="margin:2px;background:#fef9c3;color:#854d0e">${s.ticker}</span>`).join('');
+      if (heldTickers)  preview += `<div style="margin-bottom:8px"><span style="font-size:11px;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:0.4px">● Held</span><br>${heldTickers}</div>`;
+      if (watchTickers) preview += `<div style="margin-bottom:8px"><span style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.4px">● Watching</span><br>${watchTickers}</div>`;
     }
     if (data.savedAnalyses?.length) {
       preview += `<div style="margin-bottom:8px;"><span style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.4px">📊 Stock Analyses</span><br>` +
@@ -3438,11 +3450,16 @@ function dismissIncomingShare() {
 
 // Generate a shareable link
 function generateShareLink() {
+  // Only share ticker + status — no prices, no groups, no personal data
+  const stocks = [
+    ...holdings.map(h => ({ ticker: h.ticker, status: 'held' })),
+    ...watchlist.map(w => ({ ticker: w.ticker, status: 'watching' }))
+  ];
+
   const data = {
-    sharedBy:  'Me',
-    sharedAt:  new Date().toISOString(),
-    watchlist,
-    groups
+    sharedBy: 'Me',
+    sharedAt: new Date().toISOString(),
+    stocks
   };
 
   const json    = JSON.stringify(data);
@@ -3452,13 +3469,11 @@ function generateShareLink() {
   document.getElementById('share-link-wrap').style.display = '';
   document.getElementById('share-link-output').value = url;
 
+  const heldCount    = holdings.length;
+  const watchCount   = watchlist.length;
   const kb = Math.round(encoded.length / 1024 * 10) / 10;
   document.getElementById('share-link-stats').textContent =
-    `Link size: ~${kb} KB · ${watchlist.length} watchlist stocks · ${groups.length} groups`;
-
-  if (kb > 50) {
-    document.getElementById('share-link-stats').textContent += ' ⚠ Link may be too long for some email clients';
-  }
+    `~${kb} KB · ${heldCount} held · ${watchCount} watching · ${heldCount + watchCount} total`;
 }
 
 function copyShareLink() {
@@ -3480,7 +3495,7 @@ function renderSavedShares() {
     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
       <div>
         <div style="font-size:13px;font-weight:600">${s.sharedBy || 'Unknown'}</div>
-        <div style="font-size:11px;color:var(--muted)">${new Date(s.sharedAt).toLocaleDateString()} · ${(s.watchlist||[]).length} watchlist stocks</div>
+        <div style="font-size:11px;color:var(--muted)">${new Date(s.sharedAt).toLocaleDateString()} · ${(s.stocks||[]).filter(x=>x.status==='held').length} held · ${(s.stocks||[]).filter(x=>x.status==='watching').length} watching</div>
       </div>
       <div style="display:flex;gap:6px;">
         <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px" onclick="viewSavedShare(${i})">View →</button>
@@ -3504,157 +3519,29 @@ function deleteSharedEntry(i) {
   showToast('Removed');
 }
 
-function renderSharedViewer(data) {
-  document.getElementById('viewer-title').textContent = (data.sharedBy || 'Unknown') + "'s Research";
-  document.getElementById('viewer-sub').textContent   = 'Shared ' + new Date(data.sharedAt).toLocaleDateString();
-  document.getElementById('shared-viewer').style.display = '';
-
-  let html = '';
-
-  if (data.savedAnalyses?.length) {
-    html += `<h4 style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--accent);margin-bottom:12px">📊 Stock Analyses (${data.savedAnalyses.length})</h4>`;
-    html += data.savedAnalyses.map(a => `
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:10px">
-        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px">
-          <span class="ticker-badge">${a.ticker}</span>
-          <span style="font-size:12px;color:var(--muted)">${a.name||''}</span>
-          <span style="font-size:11px;color:var(--muted);margin-left:auto">${new Date(a.date).toLocaleDateString()}</span>
-        </div>
-        <div style="font-size:12px;color:var(--muted);line-height:1.7">${(a.markdown||'').replace(/^## (.+)$/gm,'<strong style="color:var(--text)">$1</strong>').replace(/\n/g,'<br>')}</div>
-      </div>`).join('');
-  }
-
-  if (data.etfSnapshots?.length) {
-    const names = [...new Set(data.etfSnapshots.map(s => s.name))];
-    html += `<h4 style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--accent);margin:20px 0 12px">📦 ETF Snapshots</h4>`;
-    html += names.map(name => {
-      const snaps = data.etfSnapshots.filter(s => s.name === name).sort((a,b) => a.date.localeCompare(b.date));
-      const latest = snaps[snaps.length - 1];
-      const maxW = Math.max(...latest.holdings.map(h => h.weight));
-      return `<div style="margin-bottom:16px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span class="ticker-badge">${name}</span><span style="font-size:11px;color:var(--muted)">${snaps.length} snapshot${snaps.length>1?'s':''} · latest: ${latest.date}</span></div>
-        ${latest.holdings.map(h => `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:12px">
-          <span style="font-weight:700;color:var(--accent);min-width:50px;font-family:var(--mono)">${h.ticker}</span>
-          <div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="height:100%;width:${(h.weight/maxW*100).toFixed(0)}%;background:var(--accent);border-radius:3px"></div></div>
-          <span style="font-family:var(--mono);color:var(--muted);min-width:40px;text-align:right">${h.weight.toFixed(1)}%</span>
-        </div>`).join('')}
-      </div>`;
-    }).join('');
-  }
-
-  if (data.notes?.length) {
-    html += `<h4 style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--accent);margin:20px 0 12px">📝 Notes</h4>`;
-    html += data.notes.map(n => `
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:10px">
-        <div style="font-weight:600;font-size:13px;margin-bottom:6px">${n.title}</div>
-        <div style="font-size:12px;color:var(--muted);line-height:1.7;white-space:pre-wrap">${n.body||''}</div>
-      </div>`).join('');
-  }
-
-  if (!html) html = '<div class="analysis-placeholder"><div class="big">📭</div><p>No content in this share.</p></div>';
-
-  // Watchlist
-  if (data.watchlist?.length) {
-    let wHtml = `<h4 style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--accent);margin:20px 0 12px">👀 Watchlist (${data.watchlist.length})</h4>`;
-    const wGroups = {};
-    data.watchlist.forEach(w => {
-      const gid = w.groupId || '__ungrouped__';
-      if (!wGroups[gid]) wGroups[gid] = [];
-      wGroups[gid].push(w);
-    });
-    wHtml += Object.entries(wGroups).map(([gid, items]) => {
-      const gname = (data.groups||[]).find(g => g.id === gid)?.name || 'Ungrouped';
-      return `<div style="margin-bottom:12px">
-        <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px">${gname}</div>
-        <div style="display:flex;flex-wrap:wrap;gap:4px">${items.map(w => `<span class="ticker-badge">${w.ticker}</span>${w.companyName ? `<span style="font-size:11px;color:var(--muted);align-self:center;margin-left:2px">${w.companyName}</span>` : ''}`).join(' ')}</div>
-      </div>`;
-    }).join('');
-    html = wHtml + html;
-  }
-
-  // Holdings / Full View
-  if (data.holdings?.length) {
-    const totalVal = data.holdings.reduce((s, h) => s + (h.currentPrice || h.cost) * h.shares, 0);
-    let fHtml = `<h4 style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--accent);margin-bottom:12px">📈 Holdings (${data.holdings.length})</h4>`;
-    // Group by group
-    const byGroup = {};
-    data.holdings.forEach(h => {
-      const gid = h.groupId || '__ungrouped__';
-      if (!byGroup[gid]) byGroup[gid] = [];
-      byGroup[gid].push(h);
-    });
-    fHtml += Object.entries(byGroup).map(([gid, items]) => {
-      const gname = (data.groups||[]).find(g => g.id === gid)?.name || 'Ungrouped';
-      const gColor = (data.groups||[]).find(g => g.id === gid)?.color || '#9ca3af';
-      return `<div style="margin-bottom:14px">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-          <span style="width:8px;height:8px;border-radius:50%;background:${gColor};display:inline-block"></span>
-          <span style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px">${gname}</span>
-        </div>
-        <table style="width:100%;border-collapse:collapse;font-size:12px">
-          <thead><tr style="background:var(--surface2)">
-            <th style="padding:6px 10px;text-align:left;font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase">Ticker</th>
-            <th style="padding:6px 10px;text-align:left;font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase">Name</th>
-            <th style="padding:6px 10px;text-align:right;font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase">% of Portfolio</th>
-          </tr></thead>
-          <tbody>${items.sort((a,b)=>a.ticker.localeCompare(b.ticker)).map(h => {
-            const val = (h.currentPrice || h.cost) * h.shares;
-            const pct = totalVal ? (val / totalVal * 100).toFixed(1) : '—';
-            return `<tr style="border-bottom:1px solid var(--border)">
-              <td style="padding:7px 10px"><span class="ticker-badge">${h.ticker}</span></td>
-              <td style="padding:7px 10px;color:var(--muted)">${h.companyName || '—'}</td>
-              <td style="padding:7px 10px;text-align:right;font-family:var(--mono)">${pct}%</td>
-            </tr>`;
-          }).join('')}</tbody>
-        </table>
-      </div>`;
-    }).join('');
-    html = fHtml + html;
-  }
-  document.getElementById('viewer-body').innerHTML = html;
-  document.getElementById('shared-viewer').scrollIntoView({ behavior: 'smooth' });
-}
-
 function importPastedLink() {
   const input  = document.getElementById('paste-link-input');
   const status = document.getElementById('paste-link-status');
   const raw    = input.value.trim();
   if (!raw) { status.textContent = '⚠ Paste a share link first'; status.style.color = 'var(--red)'; return; }
-
   try {
-    // Extract the ?shared= parameter from the URL
-    let encoded = '';
-    if (raw.includes('?shared=')) {
-      encoded = raw.split('?shared=')[1].split('&')[0];
-    } else {
-      // Maybe they pasted just the encoded string directly
-      encoded = raw;
-    }
-
+    const encoded = raw.includes('?shared=') ? raw.split('?shared=')[1].split('&')[0] : raw;
     const json = LZString.decompressFromEncodedURIComponent(encoded);
-    if (!json) throw new Error('Could not decompress — make sure you pasted the full link');
+    if (!json) throw new Error('Could not decompress — paste the full link');
     const data = JSON.parse(json);
     if (!data.sharedAt) throw new Error('Invalid share link format');
-
-    // Check duplicate
     const isDupe = savedShares.some(s => s.sharedAt === data.sharedAt && s.sharedBy === data.sharedBy);
-    if (isDupe) {
-      status.textContent = '⚠ This share is already saved';
-      status.style.color = 'var(--muted)';
-      return;
-    }
-
-    // Show preview inline
-    const watchCount = (data.watchlist || []).length;
-    const groupCount = (data.groups   || []).length;
-    status.innerHTML = `✓ Found: <strong>${data.sharedBy || 'Unknown'}</strong> · ${watchCount} watchlist stocks · ${groupCount} groups — <button class="btn btn-primary" style="font-size:11px;padding:3px 10px;margin-left:6px" onclick="confirmPastedImport()">Save →</button>`;
+    if (isDupe) { status.textContent = '⚠ Already saved'; status.style.color = 'var(--muted)'; return; }
+    const stocks = data.stocks || [];
+    const heldN  = stocks.filter(s => s.status === 'held').length;
+    const watchN = stocks.filter(s => s.status === 'watching').length;
+    status.innerHTML = `✓ Found: <strong>${data.sharedBy || 'Unknown'}</strong> · ${heldN} held · ${watchN} watching &nbsp;<button class="btn btn-primary" style="font-size:11px;padding:3px 10px" onclick="confirmPastedImport()">Save →</button>`;
     status.style.color = 'var(--green)';
     status._pendingData = data;
-
   } catch(e) {
     status.textContent = '⚠ ' + e.message;
     status.style.color = 'var(--red)';
-    input.style.borderColor = 'var(--red)';
+    document.getElementById('paste-link-input').style.borderColor = 'var(--red)';
   }
 }
 
@@ -3667,27 +3554,87 @@ function confirmPastedImport() {
   renderSavedShares();
   document.getElementById('paste-link-input').value = '';
   status.textContent = '✓ Saved to your Community tab';
-  status.style.color = 'var(--green)';
   status._pendingData = null;
-  showToast('✓ Shared research saved');
+  showToast('✓ Shared portfolio saved');
 }
 
-</script>
-<div class="toast" id="toast"></div>
+function updateCommunityUI() {
+  renderSavedShares();
+}
 
-<!-- Edit Watchlist Group Modal -->
-<div class="modal-overlay" id="edit-watch-group-modal">
-  <div class="modal" style="width:320px">
-    <h3>Edit Watchlist Stock — <span id="ewg-ticker"></span></h3>
-    <div class="form-group">
-      <label>Group</label>
-      <select id="ewg-select"></select>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal('edit-watch-group-modal')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveEditWatchGroup()">Save</button>
-    </div>
-  </div>
-</div>
-</body>
-</html>
+let sharedViewFilter = 'all';
+let currentViewingData = null;
+
+function filterSharedView(f) {
+  sharedViewFilter = f;
+  ['all','held','watching'].forEach(v => {
+    const btn = document.getElementById('svf-' + v);
+    if (btn) btn.classList.toggle('active', v === f);
+  });
+  if (currentViewingData) renderSharedViewerBody(currentViewingData);
+}
+
+function renderSharedViewer(data) {
+  currentViewingData = data;
+  sharedViewFilter   = 'all';
+  document.getElementById('viewer-title').textContent = (data.sharedBy || 'Unknown') + "'s Portfolio";
+  document.getElementById('shared-viewer').style.display = '';
+
+  const stocks = data.stocks || [];
+  const heldN  = stocks.filter(s => s.status === 'held').length;
+  const watchN = stocks.filter(s => s.status === 'watching').length;
+
+  document.getElementById('viewer-sub').textContent =
+    'Shared ' + new Date(data.sharedAt).toLocaleDateString() + ' · ' + heldN + ' held · ' + watchN + ' watching';
+
+  // Add filter toggle to viewer header
+  const existing = document.getElementById('shared-view-filter-wrap');
+  if (existing) existing.remove();
+  const header = document.querySelector('#shared-viewer .research-card-header');
+  if (header) {
+    const wrap = document.createElement('div');
+    wrap.id = 'shared-view-filter-wrap';
+    wrap.className = 'view-toggle';
+    wrap.innerHTML =
+      '<button class="active" id="svf-all"      onclick="filterSharedView('all')">All (' + stocks.length + ')</button>' +
+      '<button                id="svf-held"     onclick="filterSharedView('held')">● Held (' + heldN + ')</button>' +
+      '<button                id="svf-watching" onclick="filterSharedView('watching')">● Watching (' + watchN + ')</button>';
+    header.appendChild(wrap);
+  }
+
+  renderSharedViewerBody(data);
+  document.getElementById('shared-viewer').scrollIntoView({ behavior: 'smooth' });
+}
+
+function renderSharedViewerBody(data) {
+  const stocks   = data.stocks || [];
+  const body     = document.getElementById('viewer-body');
+  if (!stocks.length) {
+    body.innerHTML = '<div class="analysis-placeholder"><div class="big">📭</div><p>No stocks in this share.</p></div>';
+    return;
+  }
+  const filtered = sharedViewFilter === 'all' ? stocks : stocks.filter(s => s.status === sharedViewFilter);
+  if (!filtered.length) {
+    body.innerHTML = '<div class="analysis-placeholder"><div class="big">🔍</div><p>No stocks match this filter.</p></div>';
+    return;
+  }
+  const rows = filtered.map(s => {
+    const isHeld = s.status === 'held';
+    const color  = isHeld ? 'var(--green)' : 'var(--accent)';
+    const label  = isHeld ? 'Held' : 'Watching';
+    return '<tr style="border-bottom:1px solid var(--border)">' +
+      '<td style="padding:10px 14px"><span class="ticker-badge">' + s.ticker + '</span></td>' +
+      '<td style="padding:10px 14px;font-size:12px;color:var(--muted)">' + (s.name || '—') + '</td>' +
+      '<td style="padding:10px 14px;text-align:center"><span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:' + color + '">' +
+        '<span style="width:8px;height:8px;border-radius:50%;background:' + color + ';flex-shrink:0"></span>' + label +
+      '</span></td>' +
+    '</tr>';
+  }).join('');
+  const thStyle = 'padding:8px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--border)';
+  body.innerHTML = '<div class="table-wrap"><table style="width:100%;border-collapse:collapse">' +
+    '<thead><tr>' +
+      '<th style="' + thStyle + '">Ticker</th>' +
+      '<th style="' + thStyle + '">Company</th>' +
+      '<th style="' + thStyle + ';text-align:center">Status</th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+}
