@@ -1494,7 +1494,7 @@ function renderPortfolioCardView() {
           <span class="wl-stock-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${h.companyName || '—'}</span>
         </div>
         <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
-          <button class="btn-ghost" style="font-size:11px;padding:2px 5px" onclick="event.stopPropagation();openEditModal('${h.ticker}')" title="Edit stock">✎</button>
+          <button class="btn-ghost" style="font-size:11px;padding:2px 5px" data-edit-ticker="${h.ticker}" data-edit-fn="openEditModal" onclick="event.stopPropagation();window[this.dataset.editFn](this.dataset.editTicker)" title="Edit stock">✎</button>
           <span style="color:var(--border);font-size:14px;cursor:grab;padding:0 2px">⠿</span>
         </div>
       </div>`;
@@ -2168,10 +2168,10 @@ function renderCardView() {
       const isFirst = i === 0;
       const isLast  = i === allStocks.length - 1;
 
-      // Edit action: held = edit stock details, watching = edit group
-      const editBtn = s.held
-        ? `<button class="btn-ghost" style="font-size:11px;padding:2px 5px" onclick="event.stopPropagation();openEditModal('${s.ticker}')" title="Edit stock">✎</button>`
-        : `<button class="btn-ghost" style="font-size:11px;padding:2px 5px" onclick="event.stopPropagation();openEditWatchGroupModal('${s.ticker}')" title="Change group">✎</button>`;
+      // Edit action: use data attributes to avoid quote escaping issues in nested templates
+      const editFn   = s.held ? 'openEditModal' : 'openEditWatchGroupModal';
+      const editTitle = s.held ? 'Edit stock' : 'Change group';
+      const editBtn  = `<button class="btn-ghost" style="font-size:11px;padding:2px 5px" data-edit-ticker="${s.ticker}" data-edit-fn="${editFn}" onclick="event.stopPropagation();window[this.dataset.editFn](this.dataset.editTicker)" title="${editTitle}">✎</button>`;
 
       return `<div class="wl-stock-item"
         draggable="true"
@@ -2186,6 +2186,7 @@ function renderCardView() {
         <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
           ${s.held ? '<span class="wl-stock-held" style="margin-right:2px">●</span>' : ''}
           ${editBtn}
+          ${!s.held ? `<button class="btn-danger" style="font-size:11px;padding:2px 5px" data-del-ticker="${s.ticker}" onclick="event.stopPropagation();removeWatchItem(this.dataset.delTicker)" title="Remove from watchlist">✕</button>` : ''}
           <span style="color:var(--border);font-size:14px;cursor:grab;padding:0 2px">⠿</span>
         </div>
       </div>`;
@@ -2907,18 +2908,10 @@ async function fetchETFHoldings() {
       return;
     }
 
-    // Populate manual textarea as preview
-    document.getElementById('etf-holdings-input').value = top10.map(h => `${h.ticker}, ${h.weight.toFixed(2)}`).join('\n');
 
-    // Auto-save snapshot
-    etfSnapshots = etfSnapshots.filter(s => !(s.name === ticker && s.date === date));
-    etfSnapshots.push({ id: 'etf_' + Date.now(), name: ticker, date, holdings: top10 });
-    saveResearchData();
-    renderETFSnapshots();
-
+    saveETFSnapshot(ticker, date, top10);
     status.textContent = `✓ Fetched ${top10.length} holdings for ${ticker} (${date})`;
     status.style.color = 'var(--green)';
-    showToast(`✓ ${ticker} snapshot saved — ${top10.length} holdings`);
 
   } catch(e) {
     status.textContent = `⚠ Error: ${e.message}. Check your Alpha Vantage API key in ⚙ Settings.`;
@@ -2927,26 +2920,13 @@ async function fetchETFHoldings() {
 }
 
 // ── ETF TRACKER ──
-function saveETFSnapshot() {
-  const name = document.getElementById('etf-name-input').value.trim().toUpperCase();
-  const date = document.getElementById('etf-date-input').value || new Date().toISOString().slice(0,10);
-  const raw  = document.getElementById('etf-holdings-input').value.trim();
-  if (!name || !raw) { showToast('Enter ETF name and holdings'); return; }
-
-  const holdings = raw.split('\n').map(line => {
-    const parts = line.split(',');
-    return { ticker: parts[0]?.trim().toUpperCase(), weight: parseFloat(parts[1]) || 0 };
-  }).filter(h => h.ticker && h.weight > 0);
-
-  if (!holdings.length) { showToast('No valid holdings found. Format: TICKER, Weight%'); return; }
-
-  // Remove existing snapshot for same ETF + date and replace
+function saveETFSnapshot(name, date, holdingsData) {
+  // Called internally after a successful fetch
   etfSnapshots = etfSnapshots.filter(s => !(s.name === name && s.date === date));
-  etfSnapshots.push({ id: 'etf_' + Date.now(), name, date, holdings });
+  etfSnapshots.push({ id: 'etf_' + Date.now(), name, date, holdings: holdingsData });
   saveResearchData();
   renderETFSnapshots();
-  document.getElementById('etf-holdings-input').value = '';
-  showToast(`Saved ${name} snapshot (${date}) — ${holdings.length} holdings`);
+  showToast(`Saved ${name} snapshot (${date}) — ${holdingsData.length} holdings`);
 }
 
 function clearETF() {
