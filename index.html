@@ -718,12 +718,31 @@
       </div>
     </div>
 
+    <!-- Import via pasted link -->
+    <div class="research-card" style="margin-bottom:20px;">
+      <div class="research-card-header">
+        <div>
+          <div class="research-card-title">Import a Shared Link</div>
+          <div class="research-card-sub">Paste a share link you received to preview and save it</div>
+        </div>
+      </div>
+      <div class="research-card-body">
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="paste-link-input" placeholder="Paste share link here…"
+            style="flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:var(--mono);outline:none;background:var(--surface);color:var(--text);"
+            oninput="this.style.borderColor='var(--border)'">
+          <button class="btn btn-primary" onclick="importPastedLink()">Import →</button>
+        </div>
+        <div id="paste-link-status" style="font-size:12px;color:var(--muted);margin-top:8px;min-height:18px;"></div>
+      </div>
+    </div>
+
     <!-- Saved shared research -->
     <div class="research-card">
       <div class="research-card-header">
         <div>
           <div class="research-card-title">Saved Shared Research</div>
-          <div class="research-card-sub">Research others have shared with you</div>
+          <div class="research-card-sub">Watchlists others have shared with you</div>
         </div>
       </div>
       <div id="saved-shares-list" style="padding:16px;">
@@ -1484,18 +1503,23 @@ function renderPortfolioCardView() {
     const stockRows = sortedHoldings.map((h, i) => {
       const isFirst = i === 0, isLast = i === sortedHoldings.length - 1;
       return `<div class="wl-stock-item"
-        draggable="true"
-        ondragstart="onDragStart(event,'${h.ticker}','holding')"
-        ondragend="onDragEnd(event)"
-        ondragover="onDragOver(event,'${h.ticker}','holding')" ondragleave="this.classList.remove('drag-target')"
+        ondragover="onDragOver(event,'${h.ticker}','holding')"
+        ondragleave="this.classList.remove('drag-target')"
         ondrop="onDrop(event,'${h.ticker}','holding')">
         <div style="display:flex;align-items:center;flex:1;min-width:0;gap:0;cursor:pointer" onclick="openStockOverlay('${h.ticker}')">
           <span class="wl-ticker-fixed"><span class="ticker-badge" style="font-size:11px;padding:2px 6px">${h.ticker}</span></span>
           <span class="wl-stock-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${h.companyName || '—'}</span>
         </div>
         <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
-          <button class="btn-ghost" style="font-size:11px;padding:2px 5px" data-edit-ticker="${h.ticker}" data-edit-fn="openEditModal" onclick="event.stopPropagation();window[this.dataset.editFn](this.dataset.editTicker)" title="Edit stock">✎</button>
-          <span style="color:var(--border);font-size:14px;cursor:grab;padding:0 2px">⠿</span>
+          <button class="btn-ghost" style="font-size:11px;padding:2px 5px"
+            data-edit-ticker="${h.ticker}" data-edit-fn="openEditModal"
+            onclick="event.stopPropagation();window[this.dataset.editFn](this.dataset.editTicker)"
+            title="Edit stock">✎</button>
+          <span draggable="true"
+            ondragstart="onDragStart(event,'${h.ticker}','holding')"
+            ondragend="onDragEnd(event)"
+            style="color:var(--muted);font-size:14px;cursor:grab;padding:0 4px"
+            title="Drag to reorder">⠿</span>
         </div>
       </div>`;
     }).join('');
@@ -2174,10 +2198,10 @@ function renderCardView() {
       const editBtn  = `<button class="btn-ghost" style="font-size:11px;padding:2px 5px" data-edit-ticker="${s.ticker}" data-edit-fn="${editFn}" onclick="event.stopPropagation();window[this.dataset.editFn](this.dataset.editTicker)" title="${editTitle}">✎</button>`;
 
       return `<div class="wl-stock-item"
-        draggable="true"
-        ondragstart="onDragStart(event,'${s.ticker}','card_${gid}')"
-        ondragend="onDragEnd(event)"
-        ondragover="onDragOver(event,'${s.ticker}','card_${gid}')" ondragleave="this.classList.remove('drag-target')"
+        data-drag-ticker="${s.ticker}"
+        data-drag-type="card_${gid}"
+        ondragover="onDragOver(event,'${s.ticker}','card_${gid}')"
+        ondragleave="this.classList.remove('drag-target')"
         ondrop="onDrop(event,'${s.ticker}','card_${gid}')">
         <div style="display:flex;align-items:center;flex:1;min-width:0;gap:0;">
           <span class="wl-ticker-fixed"><span class="ticker-badge" style="font-size:11px;padding:2px 6px">${s.ticker}</span></span>
@@ -2187,7 +2211,10 @@ function renderCardView() {
           ${s.held ? '<span class="wl-stock-held" style="margin-right:2px">●</span>' : ''}
           ${editBtn}
           ${!s.held ? `<button class="btn-danger" style="font-size:11px;padding:2px 5px" data-del-ticker="${s.ticker}" onclick="event.stopPropagation();removeWatchItem(this.dataset.delTicker)" title="Remove from watchlist">✕</button>` : ''}
-          <span style="color:var(--border);font-size:14px;cursor:grab;padding:0 2px">⠿</span>
+          <span draggable="true"
+            ondragstart="onDragStart(event,'${s.ticker}','card_${gid}')"
+            ondragend="onDragEnd(event)"
+            style="color:var(--muted);font-size:14px;cursor:grab;padding:0 4px" title="Drag to reorder">⠿</span>
         </div>
       </div>`;
     }).join('');
@@ -3594,8 +3621,61 @@ function renderSharedViewer(data) {
   document.getElementById('shared-viewer').scrollIntoView({ behavior: 'smooth' });
 }
 
-function updateCommunityUI() {
+function importPastedLink() {
+  const input  = document.getElementById('paste-link-input');
+  const status = document.getElementById('paste-link-status');
+  const raw    = input.value.trim();
+  if (!raw) { status.textContent = '⚠ Paste a share link first'; status.style.color = 'var(--red)'; return; }
+
+  try {
+    // Extract the ?shared= parameter from the URL
+    let encoded = '';
+    if (raw.includes('?shared=')) {
+      encoded = raw.split('?shared=')[1].split('&')[0];
+    } else {
+      // Maybe they pasted just the encoded string directly
+      encoded = raw;
+    }
+
+    const json = LZString.decompressFromEncodedURIComponent(encoded);
+    if (!json) throw new Error('Could not decompress — make sure you pasted the full link');
+    const data = JSON.parse(json);
+    if (!data.sharedAt) throw new Error('Invalid share link format');
+
+    // Check duplicate
+    const isDupe = savedShares.some(s => s.sharedAt === data.sharedAt && s.sharedBy === data.sharedBy);
+    if (isDupe) {
+      status.textContent = '⚠ This share is already saved';
+      status.style.color = 'var(--muted)';
+      return;
+    }
+
+    // Show preview inline
+    const watchCount = (data.watchlist || []).length;
+    const groupCount = (data.groups   || []).length;
+    status.innerHTML = `✓ Found: <strong>${data.sharedBy || 'Unknown'}</strong> · ${watchCount} watchlist stocks · ${groupCount} groups — <button class="btn btn-primary" style="font-size:11px;padding:3px 10px;margin-left:6px" onclick="confirmPastedImport()">Save →</button>`;
+    status.style.color = 'var(--green)';
+    status._pendingData = data;
+
+  } catch(e) {
+    status.textContent = '⚠ ' + e.message;
+    status.style.color = 'var(--red)';
+    input.style.borderColor = 'var(--red)';
+  }
+}
+
+function confirmPastedImport() {
+  const status = document.getElementById('paste-link-status');
+  const data   = status._pendingData;
+  if (!data) return;
+  savedShares.unshift({ ...data, savedAt: new Date().toISOString() });
+  saveSavedShares();
   renderSavedShares();
+  document.getElementById('paste-link-input').value = '';
+  status.textContent = '✓ Saved to your Community tab';
+  status.style.color = 'var(--green)';
+  status._pendingData = null;
+  showToast('✓ Shared research saved');
 }
 
 </script>
