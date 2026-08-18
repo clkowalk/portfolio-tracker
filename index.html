@@ -3508,7 +3508,44 @@ function viewSavedShare(i) {
   const s = savedShares[i];
   if (!s) return;
   currentViewingId = i;
-  renderSharedViewer(s);
+  enrichAndRenderSharedViewer(s);
+}
+
+async function enrichAndRenderSharedViewer(data) {
+  renderSharedViewer(data); // render immediately with what we have
+
+  if (!apiKey || !data.stocks?.length) return;
+
+  // Fetch company names for tickers we don't already know
+  const body = document.getElementById('viewer-body');
+  const statusEl = document.createElement('div');
+  statusEl.style.cssText = 'font-size:11px;color:var(--muted);padding:8px 14px;display:flex;align-items:center;gap:6px';
+  statusEl.innerHTML = '<span class="spinner-inline"></span> Fetching company names…';
+  body.prepend(statusEl);
+
+  // Batch fetch profiles — respect Finnhub rate limit (60/min free)
+  const enriched = await Promise.all(data.stocks.map(async s => {
+    // Check if we already have the name in our own holdings/watchlist
+    const local = holdings.find(h => h.ticker === s.ticker) || watchlist.find(w => w.ticker === s.ticker);
+    if (local?.companyName) return { ...s, name: local.companyName };
+    try {
+      const res  = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${s.ticker}&token=${apiKey}`);
+      const prof = await res.json();
+      return { ...s, name: prof.name || s.ticker };
+    } catch(e) {
+      return { ...s, name: s.ticker };
+    }
+  }));
+
+  // Save enriched names back to the share entry so future opens are instant
+  data.stocks = enriched;
+  if (currentViewingId !== null && savedShares[currentViewingId]) {
+    savedShares[currentViewingId].stocks = enriched;
+    saveSavedShares();
+  }
+
+  statusEl.remove();
+  renderSharedViewerBody(data);
 }
 
 function deleteSharedEntry(i) {
