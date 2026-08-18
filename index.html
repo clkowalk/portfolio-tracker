@@ -1031,7 +1031,7 @@ let groups = JSON.parse(localStorage.getItem('pt_groups') || '[]');
 
 let apiKey = localStorage.getItem('pt_apikey') || '';
 let dashView = 'all'; // 'all' | 'group'
-let sortCol = null;  // 'gain' | 'pct'
+let sortCol = null;  // 'name' | 'gain' | 'pct'
 let sortDir = 'desc'; // 'asc' | 'desc'
 let editingGroupId = null;
 let groupTargets = {}; // { groupId: targetPct }
@@ -1373,12 +1373,47 @@ function onDrop(e, targetTicker, listType) {
   document.querySelectorAll('.wl-stock-item').forEach(el => el.classList.remove('drag-target'));
   if (!dragSrc || dragSrc.ticker === targetTicker) return;
 
+  // card_GID type: unified reorder across holdings + watchlist in same group
+  if (listType.startsWith('card_')) {
+    const gid = listType.slice(5); // extract group id
+    // Build combined list for this group
+    const gHoldings = holdings.filter(h => (h.groupId || UNGROUPED_ID) === gid);
+    const gWatchlist = watchlist.filter(w => (w.groupId || UNGROUPED_ID) === gid);
+    const combined = [
+      ...gHoldings.map(h => ({ ticker: h.ticker, src: 'holding' })),
+      ...gWatchlist.map(w => ({ ticker: w.ticker, src: 'watchlist' }))
+    ];
+    // Assign sortOrder based on current visual order
+    const allSorted = [
+      ...gHoldings.map(h => ({ ticker: h.ticker, sortOrder: h.sortOrder ?? 999, src: 'holding' })),
+      ...gWatchlist.map(w => ({ ticker: w.ticker, sortOrder: w.sortOrder ?? 999, src: 'watchlist' }))
+    ].sort((a,b) => a.sortOrder - b.sortOrder);
+
+    const fromIdx = allSorted.findIndex(h => h.ticker === dragSrc.ticker);
+    const toIdx   = allSorted.findIndex(h => h.ticker === targetTicker);
+    if (fromIdx === -1 || toIdx === -1) return;
+
+    allSorted.splice(toIdx, 0, allSorted.splice(fromIdx, 1)[0]);
+    allSorted.forEach((item, i) => {
+      if (item.src === 'holding') {
+        const h = holdings.find(h => h.ticker === item.ticker);
+        if (h) h.sortOrder = i;
+      } else {
+        const w = watchlist.find(w => w.ticker === item.ticker);
+        if (w) w.sortOrder = i;
+      }
+    });
+    save();
+    renderCardView();
+    return;
+  }
+
+  // Portfolio card view: holdings only
   const list = listType === 'holding' ? holdings : watchlist;
   const dragged = list.find(h => h.ticker === dragSrc.ticker);
   const target  = list.find(h => h.ticker === targetTicker);
   if (!dragged || !target) return;
 
-  // Only reorder within the same group
   const gid = dragged.groupId || UNGROUPED_ID;
   if ((target.groupId || UNGROUPED_ID) !== gid) return;
 
@@ -1397,8 +1432,7 @@ function onDrop(e, targetTicker, listType) {
   });
 
   save();
-  if (listType === 'holding') renderPortfolioCardView();
-  else renderCardView();
+  renderPortfolioCardView();
 }
 
 // ═══════════════════════════════════════
@@ -1418,6 +1452,7 @@ function setPortfolioView(view) {
   const tableToggle = document.getElementById('dash-table-toggle');
   if (tableToggle) tableToggle.style.display = view === 'table' ? '' : 'none';
   if (view === 'cards') renderPortfolioCardView();
+  if (view === 'table') renderDashboard();
 }
 
 function renderPortfolioCardView() {
@@ -1525,10 +1560,13 @@ function renderDashboard() {
     wrap.innerHTML = `<div class="empty-state"><div class="big">📈</div><p>No stocks yet.<br>Click <strong>+ Add Stock</strong> to build your portfolio.</p></div>`;
     return;
   }
+  const nameIcon = sortCol === 'name' ? (sortDir === 'desc' ? '▼' : '▲') : '⇅';
   const gainIcon = sortCol === 'gain' ? (sortDir === 'desc' ? '▼' : '▲') : '⇅';
   const pctIcon  = sortCol === 'pct'  ? (sortDir === 'desc' ? '▼' : '▲') : '⇅';
   const COLS_ALL = `<thead><tr>
-    <th>Ticker</th><th>Name</th><th>Group</th>
+    <th>Ticker</th>
+    <th class="th-sort ${sortCol==='name'?'sorted':''}" onclick="setSortCol('name')">Name <span class="sort-icon">${nameIcon}</span></th>
+    <th>Group</th>
     <th class="num">Shares</th><th class="num">Avg Cost</th>
     <th class="num">Price Today</th><th class="num">Market Value</th>
     <th class="num th-sort ${sortCol==='gain'?'sorted':''}" onclick="setSortCol('gain')">$ Gain/Loss <span class="sort-icon">${gainIcon}</span></th>
@@ -1549,7 +1587,13 @@ function renderDashboard() {
 
   if (dashView === 'all') {
     let sorted = [...holdings];
-    if (sortCol === 'gain') {
+    if (sortCol === 'name') {
+      sorted.sort((a,b) => {
+        const nA = (a.companyName || a.ticker).toLowerCase();
+        const nB = (b.companyName || b.ticker).toLowerCase();
+        return sortDir === 'desc' ? nB.localeCompare(nA) : nA.localeCompare(nB);
+      });
+    } else if (sortCol === 'gain') {
       sorted.sort((a,b) => {
         const gainA = (a.currentPrice||a.cost - a.cost) * a.shares;
         const gainB = (b.currentPrice||b.cost - b.cost) * b.shares;
@@ -2114,41 +2158,34 @@ function renderCardView() {
     const color = groupColor(gid);
     const name  = groupName(gid);
 
+    // Merge all stocks in group into one sortable list
     const allStocks = [
       ...gHoldings.map(h => ({ ticker: h.ticker, name: h.companyName || '', held: true,  sortOrder: h.sortOrder ?? 999 })),
       ...gWatchlist.map(w => ({ ticker: w.ticker, name: w.companyName || '', held: false, sortOrder: w.sortOrder ?? 999 }))
-    ].sort((a,b) => a.sortOrder - b.sortOrder);
+    ].sort((a,b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999));
 
-    // Separate held vs watching for independent ordering
-    const heldItems  = allStocks.filter(s => s.held);
-    const watchItems = allStocks.filter(s => !s.held);
-    const orderedStocks = [...heldItems, ...watchItems];
+    const stockRows = allStocks.map((s, i) => {
+      const isFirst = i === 0;
+      const isLast  = i === allStocks.length - 1;
 
-    const stockRows = orderedStocks.map((s, i) => {
-      const sameTypeItems = s.held ? heldItems : watchItems;
-      const posInType = sameTypeItems.findIndex(x => x.ticker === s.ticker);
-      const isFirst = posInType === 0;
-      const isLast  = posInType === sameTypeItems.length - 1;
-      const moveFn  = s.held ? 'moveHolding' : 'moveWatchlistItem';
+      // Edit action: held = edit stock details, watching = edit group
+      const editBtn = s.held
+        ? `<button class="btn-ghost" style="font-size:11px;padding:2px 5px" onclick="event.stopPropagation();openEditModal('${s.ticker}')" title="Edit stock">✎</button>`
+        : `<button class="btn-ghost" style="font-size:11px;padding:2px 5px" onclick="event.stopPropagation();openEditWatchGroupModal('${s.ticker}')" title="Change group">✎</button>`;
 
-      const editDropdown = '';
-
-      const dragType = s.held ? 'holding' : 'watchlist';
       return `<div class="wl-stock-item"
         draggable="true"
-        ondragstart="onDragStart(event,'${s.ticker}','${dragType}')"
+        ondragstart="onDragStart(event,'${s.ticker}','card_${gid}')"
         ondragend="onDragEnd(event)"
-        ondragover="onDragOver(event,'${s.ticker}','${dragType}')" ondragleave="this.classList.remove('drag-target')"
-        ondrop="onDrop(event,'${s.ticker}','${dragType}')">
+        ondragover="onDragOver(event,'${s.ticker}','card_${gid}')" ondragleave="this.classList.remove('drag-target')"
+        ondrop="onDrop(event,'${s.ticker}','card_${gid}')">
         <div style="display:flex;align-items:center;flex:1;min-width:0;gap:0;">
           <span class="wl-ticker-fixed"><span class="ticker-badge" style="font-size:11px;padding:2px 6px">${s.ticker}</span></span>
           <span class="wl-stock-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${s.name}</span>
         </div>
-        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
-          ${s.held
-            ? '<span class="wl-stock-held">● Held</span>'
-            : `<button class="btn-ghost" style="font-size:11px;padding:2px 6px" onclick="event.stopPropagation();openEditWatchGroupModal('${s.ticker}')" title="Change group">✎</button>`
-          }
+        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+          ${s.held ? '<span class="wl-stock-held" style="margin-right:2px">●</span>' : ''}
+          ${editBtn}
           <span style="color:var(--border);font-size:14px;cursor:grab;padding:0 2px">⠿</span>
         </div>
       </div>`;
