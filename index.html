@@ -408,71 +408,30 @@
     </div>
   </div>
 
-  <!-- Dashboard inner tab toggle -->
+  <!-- Dashboard toolbar — single row -->
   <div style="margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-    <div class="view-toggle">
-      <button class="active" id="dash-btn-holdings" onclick="setDashTab('holdings')">Holdings</button>
-      <button id="dash-btn-rebal" onclick="setDashTab('rebal')">Rebalancer</button>
-    </div>
-    <div id="dash-holdings-controls" style="display:flex;align-items:center;gap:8px;">
+    <div style="display:flex;align-items:center;gap:8px;">
       <div class="view-toggle">
         <button class="active" id="port-view-btn-cards" onclick="setPortfolioView('cards')">⊞ Cards</button>
         <button id="port-view-btn-table" onclick="setPortfolioView('table')">≡ Expanded</button>
       </div>
+      <div class="view-toggle" id="dash-table-toggle" style="display:none">
+        <button class="active" id="view-btn-all" onclick="setView('all')">All Stocks</button>
+        <button id="view-btn-group" onclick="setView('group')">By Group</button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
       <button class="btn btn-secondary" style="padding:5px 12px;font-size:12px" onclick="refreshPrices()">↻ Refresh Prices</button>
       <button class="btn btn-primary" onclick="openAddModal()">+ Add Stock</button>
     </div>
   </div>
 
-  <!-- Holdings tab -->
+  <!-- Holdings -->
   <div id="dash-holdings-wrap">
-    <!-- Card view -->
     <div id="port-cards-wrap"></div>
-
-    <!-- Table view -->
     <div id="port-table-wrap" style="display:none">
       <div class="table-wrap">
-        <div class="table-toolbar">
-          <div class="toolbar-left">
-            <span class="table-title">Holdings</span>
-            <div class="view-toggle">
-              <button class="active" id="view-btn-all" onclick="setView('all')">All Stocks</button>
-              <button id="view-btn-group" onclick="setView('group')">By Group</button>
-            </div>
-          </div>
-        </div>
         <div id="holdings-table-wrap"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Rebalancer tab -->
-  <div id="dash-rebal-wrap" style="display:none">
-    <div class="rebal-layout">
-      <div>
-        <div class="section-title">
-          Target Allocation — by Group
-          <span class="total-pct pct-warn" id="total-alloc-badge">0%</span>
-        </div>
-        <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">Set a target % for each group. Stocks within a group redistribute proportionally based on their current weights.</p>
-        <div class="table-wrap">
-          <div id="rebal-table-wrap"></div>
-        </div>
-        <div style="margin-top:12px;display:flex;gap:8px;">
-          <button class="btn btn-primary" onclick="calculate()">Calculate trades →</button>
-        </div>
-      </div>
-      <div class="rebal-side">
-        <div class="results-card">
-          <div class="results-header">Suggested Trades</div>
-          <div class="amount-input-row">
-            <label>New cash to invest ($)</label>
-            <input type="number" id="new-cash" placeholder="0.00" value="0" oninput="calculate()">
-          </div>
-          <div class="result-rows" id="trade-results">
-            <div style="padding:24px 20px;text-align:center;color:var(--muted);font-size:13px;">Set target allocations and click "Calculate trades"</div>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -1094,7 +1053,7 @@ function showPage(name, btn) {
   if (name === 'groups') renderGroupsPage();
   if (name === 'stockresearch') initResearchPage();
   if (name === 'community') updateCommunityUI();
-  if (name === 'dashboard') { setDashTab(dashTab); }
+  if (name === 'dashboard') { setPortfolioView(portfolioView); }
   if (name === 'research') initStrategyPage();
 }
 
@@ -1104,17 +1063,7 @@ function showPage(name, btn) {
 // ═══════════════════════════════════════
 let dashTab = 'holdings';
 
-function setDashTab(tab) {
-  dashTab = tab;
-  document.getElementById('dash-btn-holdings').classList.toggle('active', tab === 'holdings');
-  document.getElementById('dash-btn-rebal').classList.toggle('active', tab === 'rebal');
-  document.getElementById('dash-holdings-wrap').style.display = tab === 'holdings' ? '' : 'none';
-  document.getElementById('dash-rebal-wrap').style.display   = tab === 'rebal'    ? '' : 'none';
-  const holdCtrl = document.getElementById('dash-holdings-controls');
-  if (holdCtrl) holdCtrl.style.display = tab === 'holdings' ? 'flex' : 'none';
-  if (tab === 'holdings') { if (portfolioView === 'cards') renderPortfolioCardView(); }
-  if (tab === 'rebal') renderRebalancer();
-}
+function setDashTab(tab) { /* rebalancer removed from dashboard */ }
 
 // ═══════════════════════════════════════
 //  VIEW TOGGLE
@@ -1417,6 +1366,8 @@ function setPortfolioView(view) {
   document.getElementById('port-view-btn-table').classList.toggle('active', view === 'table');
   document.getElementById('port-cards-wrap').style.display = view === 'cards' ? '' : 'none';
   document.getElementById('port-table-wrap').style.display = view === 'table' ? '' : 'none';
+  const tableToggle = document.getElementById('dash-table-toggle');
+  if (tableToggle) tableToggle.style.display = view === 'table' ? '' : 'none';
   if (view === 'cards') renderPortfolioCardView();
 }
 
@@ -1424,7 +1375,6 @@ function renderPortfolioCardView() {
   const wrap = document.getElementById('port-cards-wrap');
   if (!wrap) return;
 
-  if (portfolioView === 'cards') { renderPortfolioCardView(); applyHide(); return; }
   if (!holdings.length) {
     wrap.innerHTML = `<div class="empty-state"><div class="big">📈</div><p>No stocks yet.<br>Click <strong>+ Add Stock</strong> to build your portfolio.</p></div>`;
     return;
@@ -1432,7 +1382,6 @@ function renderPortfolioCardView() {
 
   const totalValue = totalPortfolioValue();
 
-  // Group holdings
   const allGroupIds = [...new Set(holdings.map(h => h.groupId || UNGROUPED_ID))];
   const orderedIds = [
     ...groups.map(g => g.id).filter(id => allGroupIds.includes(id)),
@@ -1449,9 +1398,6 @@ function renderPortfolioCardView() {
 
     const sortedHoldings = [...gHoldings].sort((a,b) => (a.sortOrder??999) - (b.sortOrder??999));
     const stockRows = sortedHoldings.map((h, i) => {
-      const price = h.currentPrice || h.cost;
-      const gainPct = ((price - h.cost) / h.cost * 100);
-      const gainColor = gainPct >= 0 ? 'var(--green)' : 'var(--red)';
       const isFirst = i === 0, isLast = i === sortedHoldings.length - 1;
       return `<div class="wl-stock-item">
         <div style="display:flex;align-items:center;flex:1;min-width:0;gap:6px;cursor:pointer" onclick="openStockOverlay('${h.ticker}')">
@@ -1459,7 +1405,6 @@ function renderPortfolioCardView() {
           <span class="wl-stock-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.companyName || '—'}</span>
         </div>
         <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
-          <span style="font-size:11px;font-weight:600;color:${gainColor}">${gainPct >= 0 ? '+' : ''}${gainPct.toFixed(1)}%</span>
           <button onclick="moveHolding('${h.ticker}','up')" style="background:none;border:none;cursor:${isFirst?'default':'pointer'};color:${isFirst?'var(--border)':'var(--muted)'};font-size:12px;padding:1px 3px;line-height:1" ${isFirst?'disabled':''}>▲</button>
           <button onclick="moveHolding('${h.ticker}','down')" style="background:none;border:none;cursor:${isLast?'default':'pointer'};color:${isLast?'var(--border)':'var(--muted)'};font-size:12px;padding:1px 3px;line-height:1" ${isLast?'disabled':''}>▼</button>
         </div>
@@ -1496,7 +1441,21 @@ function renderDashboard() {
   document.getElementById('group-count-sub').textContent = `across ${groups.length} group${groups.length !== 1 ? 's' : ''}`;
   updateSummary(totalValue, totalCost, totalGain, totalGainPct);
 
-  if (portfolioView === 'cards') { renderPortfolioCardView(); applyHide(); return; }
+  if (portfolioView === 'cards') {
+    document.getElementById('port-cards-wrap').style.display = '';
+    document.getElementById('port-table-wrap').style.display = 'none';
+    const tt = document.getElementById('dash-table-toggle');
+    if (tt) tt.style.display = 'none';
+    renderPortfolioCardView();
+    applyHide();
+    return;
+  }
+  // Table view — ensure containers visible
+  document.getElementById('port-cards-wrap').style.display = 'none';
+  document.getElementById('port-table-wrap').style.display = '';
+  const tt2 = document.getElementById('dash-table-toggle');
+  if (tt2) tt2.style.display = '';
+
   if (!holdings.length) {
     wrap.innerHTML = `<div class="empty-state"><div class="big">📈</div><p>No stocks yet.<br>Click <strong>+ Add Stock</strong> to build your portfolio.</p></div>`;
     return;
@@ -1532,7 +1491,7 @@ function renderDashboard() {
       const color  = groupColor(gid);
       const name   = groupName(gid);
       html += `<tr class="group-header-row">
-        <td colspan="3"><span class="group-color-dot" style="background:${color}"></span>${name}</td>
+        <td colspan="2"><span class="group-color-dot" style="background:${color}"></span>${name}</td>
         <td colspan="4" class="num sens-mktval" style="font-family:var(--mono);font-size:12px;text-align:right">${fmt(gValue)}</td>
         <td class="num sens-gain" style="font-family:var(--mono);font-size:12px">${gGain >= 0 ? '<span class="pill-green">+' : '<span class="pill-red">'}${fmt(gGain)}</span></td>
         <td class="num" style="font-family:var(--mono);font-size:12px">${gCost ? ((gGain/gCost*100) >= 0 ? '<span class="pill-green">+' : '<span class="pill-red">') + (gGain/gCost*100).toFixed(2) + '%</span>' : '—'}</td>
@@ -1564,7 +1523,7 @@ function stockRow(h, totalValue, indent) {
     : `<span class="pill-red">${gainPct.toFixed(2)}%</span>`;
   const priceDisplay = h.currentPrice ? fmt(price) : `<span style="color:var(--muted);font-style:italic">${fmt(price)} (cost)</span>`;
   const groupCell = indent
-    ? `<td></td>`
+    ? ``
     : `<td><span class="group-badge" style="background:${color}18;color:${color}">${name}</span></td>`;
 
   return `<tr${indent ? ' class="rebal-stock-row"' : ''}>
@@ -1597,6 +1556,18 @@ function updateSummary(totalValue, totalCost, totalGain, totalGainPct) {
 // ═══════════════════════════════════════
 //  RENDER GROUPS PAGE
 // ═══════════════════════════════════════
+function moveGroup(id, direction) {
+  const idx = groups.findIndex(g => g.id === id);
+  if (direction === 'up'   && idx === 0) return;
+  if (direction === 'down' && idx === groups.length - 1) return;
+  const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+  [groups[idx], groups[swapIdx]] = [groups[swapIdx], groups[idx]];
+  save();
+  renderGroupsPage();
+  renderPortfolioCardView();
+  renderCardView();
+}
+
 function renderGroupsPage() {
   const grid = document.getElementById('groups-grid');
   const totalValue = totalPortfolioValue();
@@ -1606,16 +1577,19 @@ function renderGroupsPage() {
     return;
   }
 
-  grid.innerHTML = groups.map(g => {
+  grid.innerHTML = groups.map((g, i) => {
     const gHoldings = holdings.filter(h => (h.groupId || UNGROUPED_ID) === g.id);
     const gValue = gHoldings.reduce((s, h) => s + (h.currentPrice || h.cost) * h.shares, 0);
     const gPct   = totalValue ? (gValue / totalValue * 100) : 0;
+    const isFirst = i === 0, isLast = i === groups.length - 1;
     return `<div class="group-card">
       <div class="group-card-header">
         <div class="group-card-name">
           <span class="group-color-dot" style="background:${g.color}"></span>${g.name}
         </div>
         <div class="group-card-actions">
+          <button class="btn-ghost" style="padding:3px 6px;font-size:13px;color:${isFirst?'var(--border)':'var(--muted)'}" onclick="moveGroup('${g.id}','up')" ${isFirst?'disabled':''} title="Move up">▲</button>
+          <button class="btn-ghost" style="padding:3px 6px;font-size:13px;color:${isLast?'var(--border)':'var(--muted)'}" onclick="moveGroup('${g.id}','down')" ${isLast?'disabled':''} title="Move down">▼</button>
           <button class="btn-ghost" onclick="openGroupModal('${g.id}')">✎</button>
           <button class="btn-danger" onclick="deleteGroup('${g.id}')">✕</button>
         </div>
@@ -2061,11 +2035,7 @@ function renderCardView() {
       const isLast  = posInType === sameTypeItems.length - 1;
       const moveFn  = s.held ? 'moveHolding' : 'moveWatchlistItem';
 
-      const editDropdown = !s.held ? `
-        <select class="wl-edit-group-select" onchange="changeWatchlistGroup('${s.ticker}', this.value)" onclick="event.stopPropagation()">
-          ${groups.map(g => `<option value="${g.id}"${(watchlist.find(w=>w.ticker===s.ticker)?.groupId===g.id)?' selected':''}>${g.name}</option>`).join('')}
-          <option value="${UNGROUPED_ID}"${(!watchlist.find(w=>w.ticker===s.ticker)?.groupId||watchlist.find(w=>w.ticker===s.ticker)?.groupId===UNGROUPED_ID)?' selected':''}">Ungrouped</option>
-        </select>` : '';
+      const editDropdown = '';
 
       return `<div class="wl-stock-item">
         <div style="display:flex;align-items:center;flex:1;min-width:0;gap:6px;">
@@ -2075,7 +2045,7 @@ function renderCardView() {
         <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
           ${s.held
             ? `<span class="wl-stock-held">● Held</span>`
-            : editDropdown
+            : ``
           }
           <button onclick="${moveFn}('${s.ticker}','up')" style="background:none;border:none;cursor:${isFirst?'default':'pointer'};color:${isFirst?'var(--border)':'var(--muted)'};font-size:12px;padding:1px 3px;line-height:1" ${isFirst?'disabled':''}>▲</button>
           <button onclick="${moveFn}('${s.ticker}','down')" style="background:none;border:none;cursor:${isLast?'default':'pointer'};color:${isLast?'var(--border)':'var(--muted)'};font-size:12px;padding:1px 3px;line-height:1" ${isLast?'disabled':''}>▼</button>
@@ -2260,6 +2230,7 @@ function fmt(n) {
 (async function init() {
   checkIncomingShare();
   checkApiBanner();
+  setPortfolioView(portfolioView);
   renderDashboard();
   if (apiKey && holdings.length) {
     setStatus('loading', 'Fetching prices…');
