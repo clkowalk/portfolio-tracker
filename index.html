@@ -1452,7 +1452,7 @@ function renderPortfolioCardView() {
         draggable="true"
         ondragstart="onDragStart(event,'${h.ticker}','holding')"
         ondragend="onDragEnd(event)"
-        ondragover="onDragOver(event,'${h.ticker}','holding')"
+        ondragover="onDragOver(event,'${h.ticker}','holding')" ondragleave="this.classList.remove('drag-target')"
         ondrop="onDrop(event,'${h.ticker}','holding')">
         <div style="display:flex;align-items:center;flex:1;min-width:0;gap:0;cursor:pointer" onclick="openStockOverlay('${h.ticker}')">
           <span class="wl-ticker-fixed"><span class="ticker-badge" style="font-size:11px;padding:2px 6px">${h.ticker}</span></span>
@@ -2138,7 +2138,7 @@ function renderCardView() {
         draggable="true"
         ondragstart="onDragStart(event,'${s.ticker}','${dragType}')"
         ondragend="onDragEnd(event)"
-        ondragover="onDragOver(event,'${s.ticker}','${dragType}')"
+        ondragover="onDragOver(event,'${s.ticker}','${dragType}')" ondragleave="this.classList.remove('drag-target')"
         ondrop="onDrop(event,'${s.ticker}','${dragType}')">
         <div style="display:flex;align-items:center;flex:1;min-width:0;gap:0;">
           <span class="wl-ticker-fixed"><span class="ticker-badge" style="font-size:11px;padding:2px 6px">${s.ticker}</span></span>
