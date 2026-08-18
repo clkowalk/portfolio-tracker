@@ -3623,7 +3623,6 @@ function updateCommunityUI() {
 }
 
 let sharedViewFilter = 'all';
-let sharedViewMode   = 'list'; // 'list' | 'category'
 let currentViewingData = null;
 
 function filterSharedView(f) {
@@ -3635,19 +3634,9 @@ function filterSharedView(f) {
   if (currentViewingData) renderSharedViewerBody(currentViewingData);
 }
 
-function setSharedViewMode(m) {
-  sharedViewMode = m;
-  const listBtn = document.getElementById('svm-list');
-  const catBtn  = document.getElementById('svm-cat');
-  if (listBtn) listBtn.classList.toggle('active', m === 'list');
-  if (catBtn)  catBtn.classList.toggle('active', m === 'category');
-  if (currentViewingData) renderSharedViewerBody(currentViewingData);
-}
-
 function renderSharedViewer(data) {
   currentViewingData = data;
   sharedViewFilter   = 'all';
-  sharedViewMode     = 'list';
   document.getElementById('viewer-title').textContent = (data.sharedBy || 'Unknown') + "'s Portfolio";
   document.getElementById('shared-viewer').style.display = '';
 
@@ -3658,24 +3647,17 @@ function renderSharedViewer(data) {
   document.getElementById('viewer-sub').textContent =
     'Shared ' + new Date(data.sharedAt).toLocaleDateString() + ' · ' + heldN + ' held · ' + watchN + ' watching';
 
-  // Build controls: status filter + view mode toggle
   const existing = document.getElementById('shared-view-filter-wrap');
   if (existing) existing.remove();
   const header = document.querySelector('#shared-viewer .research-card-header');
   if (header) {
     const wrap = document.createElement('div');
     wrap.id = 'shared-view-filter-wrap';
-    wrap.style.cssText = 'display:flex;align-items:center;gap:8px;flex-wrap:wrap';
+    wrap.className = 'view-toggle';
     wrap.innerHTML =
-      '<div class="view-toggle">' +
-        '<button class="active" id="svf-all"      onclick="filterSharedView(&quot;all&quot;)">All (' + stocks.length + ')</button>' +
-        '<button                id="svf-held"     onclick="filterSharedView(&quot;held&quot;)">&#x25CF; Held (' + heldN + ')</button>' +
-        '<button                id="svf-watching" onclick="filterSharedView(&quot;watching&quot;)">&#x25CF; Watching (' + watchN + ')</button>' +
-      '</div>' +
-      '<div class="view-toggle">' +
-        '<button class="active" id="svm-list" onclick="setSharedViewMode(&quot;list&quot;)">≡ List</button>' +
-        '<button                id="svm-cat"  onclick="setSharedViewMode(&quot;category&quot;)">⊞ By Sector</button>' +
-      '</div>';
+      '<button class="active" id="svf-all"      onclick="filterSharedView(&quot;all&quot;)">All (' + stocks.length + ')</button>' +
+      '<button                id="svf-held"     onclick="filterSharedView(&quot;held&quot;)">&#x25CF; Held (' + heldN + ')</button>' +
+      '<button                id="svf-watching" onclick="filterSharedView(&quot;watching&quot;)">&#x25CF; Watching (' + watchN + ')</button>';
     header.appendChild(wrap);
   }
 
@@ -3701,7 +3683,7 @@ function renderSharedViewerBody(data) {
   const thc = th + ';text-align:center';
   const td  = 'padding:9px 10px;font-size:11px;';
 
-  const makeRow = s => {
+  const rows = filtered.map(s => {
     const isHeld   = s.status === 'held';
     const color    = isHeld ? 'var(--green)' : 'var(--accent)';
     const label    = isHeld ? 'Held' : 'Watching';
@@ -3711,10 +3693,25 @@ function renderSharedViewerBody(data) {
           ? '<span class="pill-green">+' + s.changePercent.toFixed(2) + '%</span>'
           : '<span class="pill-red">'   + s.changePercent.toFixed(2) + '%</span>')
       : '—';
-    const capStr   = s.marketCap ? fmtCap(s.marketCap) : '—';
-    const peStr    = s.pe ? s.pe.toFixed(1) : '—';
-    const rangeStr = (s.week52Low && s.week52High)
-      ? '$' + s.week52Low.toFixed(0) + ' – $' + s.week52High.toFixed(0) : '—';
+    const capStr = s.marketCap ? fmtCap(s.marketCap) : '—';
+    const peStr  = s.pe ? s.pe.toFixed(1) : '—';
+
+    // Visual 52wk bar matching dashboard style
+    const rangeHtml = (() => {
+      const price = s.price || 0;
+      if (!s.week52High || !s.week52Low || !price) return '<span style="color:var(--muted)">—</span>';
+      const range = s.week52High - s.week52Low;
+      const pos   = range > 0 ? Math.min(100, Math.max(0, (price - s.week52Low) / range * 100)) : 50;
+      const barColor = pos > 70 ? 'var(--green)' : pos < 30 ? 'var(--red)' : 'var(--accent)';
+      return '<div style="font-size:10px;color:var(--muted);white-space:nowrap;text-align:right">' +
+        fmt(s.week52Low) +
+        '<div class="bar-track" style="width:52px;display:inline-block;vertical-align:middle;margin:0 4px">' +
+          '<div class="bar-fill" style="width:' + pos.toFixed(0) + '%;background:' + barColor + '"></div>' +
+        '</div>' +
+        fmt(s.week52High) +
+      '</div>';
+    })();
+
     return '<tr style="border-bottom:1px solid var(--border);cursor:pointer" onclick="openStockOverlay(\'' + s.ticker + '\')">' +
       '<td style="' + td + '"><span class="ticker-badge" style="font-size:11px;padding:2px 6px">' + s.ticker + '</span></td>' +
       '<td style="' + td + 'color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (s.name || '—') + '</td>' +
@@ -3722,57 +3719,25 @@ function renderSharedViewerBody(data) {
       '<td style="' + td + 'text-align:right">' + chgStr + '</td>' +
       '<td style="' + td + 'font-family:var(--mono);text-align:right">' + capStr + '</td>' +
       '<td style="' + td + 'font-family:var(--mono);text-align:right">' + peStr + '</td>' +
-      '<td style="' + td + 'font-family:var(--mono);text-align:right;white-space:nowrap">' + rangeStr + '</td>' +
+      '<td style="' + td + 'text-align:right">' + rangeHtml + '</td>' +
       '<td style="' + td + 'text-align:center"><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:' + color + '">' +
         '<span style="width:7px;height:7px;border-radius:50%;background:' + color + ';flex-shrink:0"></span>' + label +
       '</span></td></tr>';
-  };
-
-  const thead = '<thead><tr>' +
-    '<th style="' + th  + '">Ticker</th>' +
-    '<th style="' + th  + '">Company</th>' +
-    '<th style="' + thr + '">Price</th>' +
-    '<th style="' + thr + '">Today</th>' +
-    '<th style="' + thr + '">Mkt Cap</th>' +
-    '<th style="' + thr + '">P/E</th>' +
-    '<th style="' + thr + '">52wk Range</th>' +
-    '<th style="' + thc + '">Status</th>' +
-  '</tr></thead>';
-
-  if (sharedViewMode === 'list') {
-    body.innerHTML = '<div class="table-wrap"><table style="width:100%;border-collapse:collapse">' +
-      thead + '<tbody>' + filtered.map(makeRow).join('') + '</tbody></table></div>';
-    return;
-  }
-
-  // ── Category (sector) view ──
-  const hasSectors = filtered.some(s => s.sector);
-  if (!hasSectors) {
-    // Sectors not yet enriched — show a nudge
-    body.innerHTML = '<div class="analysis-placeholder"><div class="big">⏳</div><p>Sector data loads after enrichment.<br>It appears once you click View on a saved share and wait for the spinner.</p></div>';
-    return;
-  }
-
-  const byCategory = {};
-  filtered.forEach(s => {
-    const cat = s.sector || 'Other';
-    if (!byCategory[cat]) byCategory[cat] = [];
-    byCategory[cat].push(s);
-  });
-
-  const sortedCats = Object.keys(byCategory).sort();
-  body.innerHTML = sortedCats.map(cat => {
-    const items = byCategory[cat];
-    return '<div style="margin-bottom:20px">' +
-      '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);padding:8px 0 6px;display:flex;align-items:center;gap:8px">' +
-        '<span style="width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block"></span>' +
-        cat + ' <span style="font-weight:400;color:var(--border)">(' + items.length + ')</span>' +
-      '</div>' +
-      '<div class="table-wrap"><table style="width:100%;border-collapse:collapse">' +
-        thead + '<tbody>' + items.map(makeRow).join('') + '</tbody></table></div>' +
-    '</div>';
   }).join('');
+
+  body.innerHTML = '<div class="table-wrap"><table style="width:100%;border-collapse:collapse">' +
+    '<thead><tr>' +
+      '<th style="' + th  + '">Ticker</th>' +
+      '<th style="' + th  + '">Company</th>' +
+      '<th style="' + thr + '">Price</th>' +
+      '<th style="' + thr + '">Today</th>' +
+      '<th style="' + thr + '">Mkt Cap</th>' +
+      '<th style="' + thr + '">P/E</th>' +
+      '<th style="' + thr + '">52wk Range</th>' +
+      '<th style="' + thc + '">Status</th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table></div>';
 }
+
 </script>
 <div class="toast" id="toast"></div>
 
