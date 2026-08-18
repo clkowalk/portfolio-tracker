@@ -192,6 +192,15 @@
   .settings-chevron { font-size:18px; color:var(--muted); }
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: #1a1a18; color: #fff; font-size: 12px; font-weight: 500; padding: 10px 18px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); opacity: 0; pointer-events: none; transition: all 0.25s; z-index: 9999; white-space: nowrap; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .th-sort { cursor: pointer; user-select: none; }
+  .th-sort:hover { color: var(--accent); }
+  .th-sort .sort-icon { margin-left: 4px; font-size: 10px; opacity: 0.5; }
+  .th-sort.sorted .sort-icon { opacity: 1; color: var(--accent); }
+
+  .wl-group-card.drag-over { border-color: var(--accent); background: var(--accent-light); }
+  .wl-stock-item { cursor: grab; }
+  .wl-stock-item.dragging { opacity: 0.4; cursor: grabbing; }
+  .wl-stock-item.drag-target { border-top: 2px solid var(--accent); }
   .blurred { filter: blur(8px); user-select: none; pointer-events: none; transition: filter 0.2s; background: #d1d5db; border-radius: 3px; color: transparent !important; }
 
   @media (max-width: 960px) {
@@ -292,6 +301,7 @@
   .wl-group-card-stocks { padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; }
   .wl-stock-item { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border); }
   .wl-stock-item:last-child { border-bottom: none; }
+  .wl-ticker-fixed { display: inline-flex; align-items: center; min-width: 56px; flex-shrink: 0; }
   .wl-stock-name { font-size: 12px; color: var(--muted); margin-left: 6px; }
   .wl-stock-held { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; color: var(--green); }
   .wl-edit-group-select { font-size: 11px; padding: 3px 6px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface); color: var(--text); font-family: var(--font); outline: none; cursor: pointer; }
@@ -888,6 +898,21 @@
   </div>
 </div>
 
+<!-- Edit Watchlist Group -->
+<div class="modal-overlay" id="edit-watch-group-modal">
+  <div class="modal" style="width:320px">
+    <h3>Change Group — <span id="ewg-ticker"></span></h3>
+    <div class="form-group">
+      <label>Group</label>
+      <select id="ewg-select"></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('edit-watch-group-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditWatchGroup()">Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- API Key -->
       <button class="settings-row" onclick="closeModal('settings-modal');openApiModal()">
         <span class="settings-icon">🔑</span>
@@ -1006,6 +1031,8 @@ let groups = JSON.parse(localStorage.getItem('pt_groups') || '[]');
 
 let apiKey = localStorage.getItem('pt_apikey') || '';
 let dashView = 'all'; // 'all' | 'group'
+let sortCol = null;  // 'gain' | 'pct'
+let sortDir = 'desc'; // 'asc' | 'desc'
 let editingGroupId = null;
 let groupTargets = {}; // { groupId: targetPct }
 let watchlist = JSON.parse(localStorage.getItem('pt_watchlist') || '[]');
@@ -1310,51 +1337,66 @@ function setStatus(type, msg) { /* status indicator removed */ }
 
 
 
+
+// ═══════════════════════════════════════
+//  DRAG TO REORDER STOCKS WITHIN GROUP
+// ═══════════════════════════════════════
+let dragSrc = null; // { ticker, listType } listType: 'holding' | 'watchlist'
+
+function onDragStart(e, ticker, listType) {
+  dragSrc = { ticker, listType };
+  e.dataTransfer.effectAllowed = 'move';
+  e.currentTarget.classList.add('dragging');
+}
+
+function onDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.wl-stock-item').forEach(el => el.classList.remove('drag-target'));
+}
+
+function onDragOver(e, ticker, listType) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  if (!dragSrc || dragSrc.ticker === ticker || dragSrc.listType !== listType) return;
+  document.querySelectorAll('.wl-stock-item').forEach(el => el.classList.remove('drag-target'));
+  e.currentTarget.classList.add('drag-target');
+}
+
+function onDrop(e, targetTicker, listType) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-target');
+  if (!dragSrc || dragSrc.ticker === targetTicker || dragSrc.listType !== listType) return;
+
+  const list = listType === 'holding' ? holdings : watchlist;
+  // Get items in same group as dragged item
+  const dragged = list.find(h => h.ticker === dragSrc.ticker);
+  const target  = list.find(h => h.ticker === targetTicker);
+  if (!dragged || !target) return;
+
+  const gid = dragged.groupId || '__ungrouped__';
+  const gItems = list
+    .filter(h => (h.groupId || '__ungrouped__') === gid)
+    .sort((a,b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999));
+
+  const fromIdx = gItems.findIndex(h => h.ticker === dragSrc.ticker);
+  const toIdx   = gItems.findIndex(h => h.ticker === targetTicker);
+  if (fromIdx === -1 || toIdx === -1) return;
+
+  // Reassign sortOrder values
+  gItems.splice(toIdx, 0, gItems.splice(fromIdx, 1)[0]);
+  gItems.forEach((item, i) => {
+    const real = list.find(h => h.ticker === item.ticker);
+    if (real) real.sortOrder = i;
+  });
+
+  save();
+  if (listType === 'holding') renderPortfolioCardView();
+  else renderCardView();
+}
+
 // ═══════════════════════════════════════
 //  STOCK ORDERING WITHIN GROUPS
 // ═══════════════════════════════════════
-function moveHolding(ticker, direction) {
-  const gid = holdings.find(h => h.ticker === ticker)?.groupId || UNGROUPED_ID;
-  const gStocks = holdings
-    .map((h, i) => ({ ...h, _idx: i }))
-    .filter(h => (h.groupId || UNGROUPED_ID) === gid)
-    .sort((a,b) => (a.sortOrder||0) - (b.sortOrder||0));
-
-  const pos = gStocks.findIndex(h => h.ticker === ticker);
-  if (direction === 'up'   && pos === 0) return;
-  if (direction === 'down' && pos === gStocks.length - 1) return;
-
-  const swapPos = direction === 'up' ? pos - 1 : pos + 1;
-  // Swap sortOrder values
-  const aIdx = holdings.findIndex(h => h.ticker === gStocks[pos].ticker);
-  const bIdx = holdings.findIndex(h => h.ticker === gStocks[swapPos].ticker);
-  const tmpOrder = holdings[aIdx].sortOrder ?? pos;
-  holdings[aIdx].sortOrder = holdings[bIdx].sortOrder ?? swapPos;
-  holdings[bIdx].sortOrder = tmpOrder;
-  save();
-  renderPortfolioCardView();
-}
-
-function moveWatchlistItem(ticker, direction) {
-  const gid = watchlist.find(w => w.ticker === ticker)?.groupId || UNGROUPED_ID;
-  const gItems = watchlist
-    .filter(w => (w.groupId || UNGROUPED_ID) === gid)
-    .sort((a,b) => (a.sortOrder||0) - (b.sortOrder||0));
-
-  const pos = gItems.findIndex(w => w.ticker === ticker);
-  if (direction === 'up'   && pos === 0) return;
-  if (direction === 'down' && pos === gItems.length - 1) return;
-
-  const swapPos = direction === 'up' ? pos - 1 : pos + 1;
-  const aIdx = watchlist.findIndex(w => w.ticker === gItems[pos].ticker);
-  const bIdx = watchlist.findIndex(w => w.ticker === gItems[swapPos].ticker);
-  const tmpOrder = watchlist[aIdx].sortOrder ?? pos;
-  watchlist[aIdx].sortOrder = watchlist[bIdx].sortOrder ?? swapPos;
-  watchlist[bIdx].sortOrder = tmpOrder;
-  save();
-  renderCardView();
-}
-
 // ═══════════════════════════════════════
 //  PORTFOLIO CARD / TABLE VIEW TOGGLE
 // ═══════════════════════════════════════
@@ -1399,15 +1441,17 @@ function renderPortfolioCardView() {
     const sortedHoldings = [...gHoldings].sort((a,b) => (a.sortOrder??999) - (b.sortOrder??999));
     const stockRows = sortedHoldings.map((h, i) => {
       const isFirst = i === 0, isLast = i === sortedHoldings.length - 1;
-      return `<div class="wl-stock-item">
-        <div style="display:flex;align-items:center;flex:1;min-width:0;gap:6px;cursor:pointer" onclick="openStockOverlay('${h.ticker}')">
-          <span class="ticker-badge" style="font-size:11px;padding:2px 6px;flex-shrink:0">${h.ticker}</span>
-          <span class="wl-stock-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.companyName || '—'}</span>
+      return `<div class="wl-stock-item"
+        draggable="true"
+        ondragstart="onDragStart(event,'${h.ticker}','holding')"
+        ondragend="onDragEnd(event)"
+        ondragover="onDragOver(event,'${h.ticker}','holding')"
+        ondrop="onDrop(event,'${h.ticker}','holding')">
+        <div style="display:flex;align-items:center;flex:1;min-width:0;gap:0;" onclick="openStockOverlay('${h.ticker}')">
+          <span class="wl-ticker-fixed"><span class="ticker-badge" style="font-size:11px;padding:2px 6px">${h.ticker}</span></span>
+          <span class="wl-stock-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${h.companyName || '—'}</span>
         </div>
-        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
-          <button onclick="moveHolding('${h.ticker}','up')" style="background:none;border:none;cursor:${isFirst?'default':'pointer'};color:${isFirst?'var(--border)':'var(--muted)'};font-size:12px;padding:1px 3px;line-height:1" ${isFirst?'disabled':''}>▲</button>
-          <button onclick="moveHolding('${h.ticker}','down')" style="background:none;border:none;cursor:${isLast?'default':'pointer'};color:${isLast?'var(--border)':'var(--muted)'};font-size:12px;padding:1px 3px;line-height:1" ${isLast?'disabled':''}>▼</button>
-        </div>
+        <span style="color:var(--border);font-size:14px;cursor:grab;padding:0 4px;flex-shrink:0">⠿</span>
       </div>`;
     }).join('');
 
@@ -1424,6 +1468,17 @@ function renderPortfolioCardView() {
       <div class="wl-group-card-stocks">${stockRows}</div>
     </div>`;
   }).join('')}</div>`;
+}
+
+
+function setSortCol(col) {
+  if (sortCol === col) {
+    sortDir = sortDir === 'desc' ? 'asc' : 'desc';
+  } else {
+    sortCol = col;
+    sortDir = 'desc';
+  }
+  renderDashboard();
 }
 
 // ═══════════════════════════════════════
@@ -1460,16 +1515,47 @@ function renderDashboard() {
     wrap.innerHTML = `<div class="empty-state"><div class="big">📈</div><p>No stocks yet.<br>Click <strong>+ Add Stock</strong> to build your portfolio.</p></div>`;
     return;
   }
-  const COLS = `<thead><tr>
+  const gainIcon = sortCol === 'gain' ? (sortDir === 'desc' ? '▼' : '▲') : '⇅';
+  const pctIcon  = sortCol === 'pct'  ? (sortDir === 'desc' ? '▼' : '▲') : '⇅';
+  const COLS_ALL = `<thead><tr>
     <th>Ticker</th><th>Name</th><th>Group</th>
     <th class="num">Shares</th><th class="num">Avg Cost</th>
     <th class="num">Price Today</th><th class="num">Market Value</th>
-    <th class="num">$ Gain/Loss</th><th class="num">% Gain/Loss</th>
-    <th class="num">% of Portfolio</th><th></th>
+    <th class="num th-sort ${sortCol==='gain'?'sorted':''}" onclick="setSortCol('gain')">$ Gain/Loss <span class="sort-icon">${gainIcon}</span></th>
+    <th class="num">% Gain/Loss</th>
+    <th class="num th-sort ${sortCol==='pct'?'sorted':''}" onclick="setSortCol('pct')">% of Portfolio <span class="sort-icon">${pctIcon}</span></th>
+    <th></th>
   </tr></thead>`;
+  const COLS_GRP = `<thead><tr>
+    <th>Ticker</th><th>Name</th>
+    <th class="num">Shares</th><th class="num">Avg Cost</th>
+    <th class="num">Price Today</th><th class="num">Market Value</th>
+    <th class="num">$ Gain/Loss</th>
+    <th class="num">% Gain/Loss</th>
+    <th class="num">% of Portfolio</th>
+    <th></th>
+  </tr></thead>`;
+  const COLS = COLS_ALL;
 
   if (dashView === 'all') {
-    const sorted = [...holdings].sort((a, b) => a.ticker.localeCompare(b.ticker));
+    let sorted = [...holdings];
+    if (sortCol === 'gain') {
+      sorted.sort((a,b) => {
+        const gainA = (a.currentPrice||a.cost - a.cost) * a.shares;
+        const gainB = (b.currentPrice||b.cost - b.cost) * b.shares;
+        const gA = ((a.currentPrice||a.cost) - a.cost) * a.shares;
+        const gB = ((b.currentPrice||b.cost) - b.cost) * b.shares;
+        return sortDir === 'desc' ? gB - gA : gA - gB;
+      });
+    } else if (sortCol === 'pct') {
+      sorted.sort((a,b) => {
+        const pA = totalValue ? ((a.currentPrice||a.cost)*a.shares/totalValue) : 0;
+        const pB = totalValue ? ((b.currentPrice||b.cost)*b.shares/totalValue) : 0;
+        return sortDir === 'desc' ? pB - pA : pA - pB;
+      });
+    } else {
+      sorted.sort((a,b) => a.ticker.localeCompare(b.ticker));
+    }
     wrap.innerHTML = `<div class="table-scroll"><table>${COLS}<tbody>${sorted.map(h => stockRow(h, totalValue)).join('')}</tbody></table></div>`;
   } else {
     // Group view
@@ -1480,7 +1566,7 @@ function renderDashboard() {
       ...(allGroupIds.includes(UNGROUPED_ID) ? [UNGROUPED_ID] : [])
     ];
 
-    let html = `<table>${COLS}<tbody>`;
+    let html = `<table>${COLS_GRP}<tbody>`;
     orderedIds.forEach(gid => {
       const gHoldings = holdings.filter(h => (h.groupId || UNGROUPED_ID) === gid).sort((a,b) => a.ticker.localeCompare(b.ticker));
       if (!gHoldings.length) return;
@@ -2037,18 +2123,23 @@ function renderCardView() {
 
       const editDropdown = '';
 
-      return `<div class="wl-stock-item">
-        <div style="display:flex;align-items:center;flex:1;min-width:0;gap:6px;">
-          <span class="ticker-badge" style="font-size:11px;padding:2px 6px;flex-shrink:0">${s.ticker}</span>
-          <span class="wl-stock-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.name}</span>
+      const dragType = s.held ? 'holding' : 'watchlist';
+      return `<div class="wl-stock-item"
+        draggable="true"
+        ondragstart="onDragStart(event,'${s.ticker}','${dragType}')"
+        ondragend="onDragEnd(event)"
+        ondragover="onDragOver(event,'${s.ticker}','${dragType}')"
+        ondrop="onDrop(event,'${s.ticker}','${dragType}')">
+        <div style="display:flex;align-items:center;flex:1;min-width:0;gap:0;">
+          <span class="wl-ticker-fixed"><span class="ticker-badge" style="font-size:11px;padding:2px 6px">${s.ticker}</span></span>
+          <span class="wl-stock-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${s.name}</span>
         </div>
-        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
           ${s.held
-            ? `<span class="wl-stock-held">● Held</span>`
-            : ``
+            ? '<span class="wl-stock-held">● Held</span>'
+            : `<button class="btn-ghost" style="font-size:11px;padding:2px 6px" onclick="event.stopPropagation();openEditWatchGroupModal('${s.ticker}')" title="Change group">✎</button>`
           }
-          <button onclick="${moveFn}('${s.ticker}','up')" style="background:none;border:none;cursor:${isFirst?'default':'pointer'};color:${isFirst?'var(--border)':'var(--muted)'};font-size:12px;padding:1px 3px;line-height:1" ${isFirst?'disabled':''}>▲</button>
-          <button onclick="${moveFn}('${s.ticker}','down')" style="background:none;border:none;cursor:${isLast?'default':'pointer'};color:${isLast?'var(--border)':'var(--muted)'};font-size:12px;padding:1px 3px;line-height:1" ${isLast?'disabled':''}>▼</button>
+          <span style="color:var(--border);font-size:14px;cursor:grab;padding:0 2px">⠿</span>
         </div>
       </div>`;
     }).join('');
@@ -2063,6 +2154,23 @@ function renderCardView() {
       <div class="wl-group-card-stocks">${stockRows || '<span style="font-size:12px;color:var(--muted)">No stocks</span>'}</div>
     </div>`;
   }).join('')}</div>`;
+}
+
+function openEditWatchGroupModal(ticker) {
+  const item = watchlist.find(w => w.ticker === ticker);
+  if (!item) return;
+  document.getElementById('ewg-ticker').textContent = ticker;
+  const sel = document.getElementById('ewg-select');
+  sel.innerHTML = `<option value="${UNGROUPED_ID}"${(!item.groupId || item.groupId === UNGROUPED_ID) ? ' selected' : ''}>— No group —</option>` +
+    groups.map(g => `<option value="${g.id}"${item.groupId === g.id ? ' selected' : ''}>${g.name}</option>`).join('');
+  document.getElementById('edit-watch-group-modal').classList.add('open');
+}
+
+function saveEditWatchGroup() {
+  const ticker = document.getElementById('ewg-ticker').textContent;
+  const newGroupId = document.getElementById('ewg-select').value;
+  changeWatchlistGroup(ticker, newGroupId);
+  closeModal('edit-watch-group-modal');
 }
 
 function changeWatchlistGroup(ticker, newGroupId) {
