@@ -1511,10 +1511,7 @@ function renderPortfolioCardView() {
           <span class="wl-stock-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${h.companyName || '—'}</span>
         </div>
         <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
-          <button class="btn-ghost" style="font-size:11px;padding:2px 5px"
-            data-edit-ticker="${h.ticker}" data-edit-fn="openEditModal"
-            onclick="event.stopPropagation();window[this.dataset.editFn](this.dataset.editTicker)"
-            title="Edit stock">✎</button>
+          <button class="btn-ghost" style="font-size:11px;padding:2px 5px" data-ticker="' + h.ticker + '" data-fn="openEditModal" onclick="event.stopPropagation();cardEditClick(this)" title="Edit stock">✎</button>
           <span draggable="true"
             ondragstart="onDragStart(event,'${h.ticker}','holding')"
             ondragend="onDragEnd(event)"
@@ -2152,6 +2149,17 @@ function setWatchlistView(view) {
   if (view === 'table') renderFullView();
 }
 
+
+function cardEditClick(el) {
+  var ticker = el.getAttribute('data-ticker');
+  var fn = el.getAttribute('data-fn');
+  if (fn === 'openEditModal') openEditModal(ticker);
+  else if (fn === 'openEditWatchGroupModal') openEditWatchGroupModal(ticker);
+}
+function cardDeleteClick(el) {
+  removeWatchItem(el.getAttribute('data-ticker'));
+}
+
 function renderCardView() {
   const wrap = document.getElementById('rsch-full-cards');
 
@@ -2193,9 +2201,9 @@ function renderCardView() {
       const isLast  = i === allStocks.length - 1;
 
       // Edit action: build button with direct function call, no 'this' reference
-      const editBtn = s.held
-        ? `<button class="btn-ghost" style="font-size:11px;padding:2px 5px" onclick="event.stopPropagation();openEditModal('${s.ticker}')" title="Edit stock">✎</button>`
-        : `<button class="btn-ghost" style="font-size:11px;padding:2px 5px" onclick="event.stopPropagation();openEditWatchGroupModal('${s.ticker}')" title="Change group">✎</button>`;
+      var editFnName = s.held ? 'openEditModal' : 'openEditWatchGroupModal';
+      var editTitleText = s.held ? 'Edit stock' : 'Change group';
+      const editBtn = '<button class="btn-ghost" style="font-size:11px;padding:2px 5px" data-ticker="' + s.ticker + '" data-fn="' + editFnName + '" onclick="event.stopPropagation();cardEditClick(this)" title="' + editTitleText + '">✎</button>';
 
       return `<div class="wl-stock-item"
         data-drag-ticker="${s.ticker}"
@@ -2210,7 +2218,7 @@ function renderCardView() {
         <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
           ${s.held ? '<span class="wl-stock-held" style="margin-right:2px">●</span>' : ''}
           ${editBtn}
-          ${!s.held ? `<button class="btn-danger" style="font-size:11px;padding:2px 5px" data-del-ticker="${s.ticker}" onclick="event.stopPropagation();removeWatchItem(this.dataset.delTicker)" title="Remove from watchlist">✕</button>` : ''}
+          ${!s.held ? '<button class="btn-danger" style="font-size:11px;padding:2px 5px" data-ticker="' + s.ticker + '" onclick="event.stopPropagation();cardDeleteClick(this)" title="Remove from watchlist">✕</button>' : ''}
           <span draggable="true"
             ondragstart="onDragStart(event,'${s.ticker}','card_${gid}')"
             ondragend="onDragEnd(event)"
