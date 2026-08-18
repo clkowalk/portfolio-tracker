@@ -1346,43 +1346,50 @@ let dragSrc = null; // { ticker, listType } listType: 'holding' | 'watchlist'
 function onDragStart(e, ticker, listType) {
   dragSrc = { ticker, listType };
   e.dataTransfer.effectAllowed = 'move';
-  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.setData('text/plain', ticker);
+  setTimeout(() => { if (e.currentTarget) e.currentTarget.classList.add('dragging'); }, 0);
 }
 
 function onDragEnd(e) {
-  e.currentTarget.classList.remove('dragging');
-  document.querySelectorAll('.wl-stock-item').forEach(el => el.classList.remove('drag-target'));
+  document.querySelectorAll('.wl-stock-item').forEach(el => {
+    el.classList.remove('dragging');
+    el.classList.remove('drag-target');
+  });
+  dragSrc = null;
 }
 
 function onDragOver(e, ticker, listType) {
   e.preventDefault();
+  e.stopPropagation();
   e.dataTransfer.dropEffect = 'move';
-  if (!dragSrc || dragSrc.ticker === ticker || dragSrc.listType !== listType) return;
+  if (!dragSrc || dragSrc.ticker === ticker) return;
   document.querySelectorAll('.wl-stock-item').forEach(el => el.classList.remove('drag-target'));
   e.currentTarget.classList.add('drag-target');
 }
 
 function onDrop(e, targetTicker, listType) {
   e.preventDefault();
-  e.currentTarget.classList.remove('drag-target');
-  if (!dragSrc || dragSrc.ticker === targetTicker || dragSrc.listType !== listType) return;
+  e.stopPropagation();
+  document.querySelectorAll('.wl-stock-item').forEach(el => el.classList.remove('drag-target'));
+  if (!dragSrc || dragSrc.ticker === targetTicker) return;
 
   const list = listType === 'holding' ? holdings : watchlist;
-  // Get items in same group as dragged item
   const dragged = list.find(h => h.ticker === dragSrc.ticker);
   const target  = list.find(h => h.ticker === targetTicker);
   if (!dragged || !target) return;
 
-  const gid = dragged.groupId || '__ungrouped__';
+  // Only reorder within the same group
+  const gid = dragged.groupId || UNGROUPED_ID;
+  if ((target.groupId || UNGROUPED_ID) !== gid) return;
+
   const gItems = list
-    .filter(h => (h.groupId || '__ungrouped__') === gid)
+    .filter(h => (h.groupId || UNGROUPED_ID) === gid)
     .sort((a,b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999));
 
   const fromIdx = gItems.findIndex(h => h.ticker === dragSrc.ticker);
   const toIdx   = gItems.findIndex(h => h.ticker === targetTicker);
   if (fromIdx === -1 || toIdx === -1) return;
 
-  // Reassign sortOrder values
   gItems.splice(toIdx, 0, gItems.splice(fromIdx, 1)[0]);
   gItems.forEach((item, i) => {
     const real = list.find(h => h.ticker === item.ticker);
@@ -1447,11 +1454,14 @@ function renderPortfolioCardView() {
         ondragend="onDragEnd(event)"
         ondragover="onDragOver(event,'${h.ticker}','holding')"
         ondrop="onDrop(event,'${h.ticker}','holding')">
-        <div style="display:flex;align-items:center;flex:1;min-width:0;gap:0;" onclick="openStockOverlay('${h.ticker}')">
+        <div style="display:flex;align-items:center;flex:1;min-width:0;gap:0;cursor:pointer" onclick="openStockOverlay('${h.ticker}')">
           <span class="wl-ticker-fixed"><span class="ticker-badge" style="font-size:11px;padding:2px 6px">${h.ticker}</span></span>
           <span class="wl-stock-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${h.companyName || '—'}</span>
         </div>
-        <span style="color:var(--border);font-size:14px;cursor:grab;padding:0 4px;flex-shrink:0">⠿</span>
+        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+          <button class="btn-ghost" style="font-size:11px;padding:2px 5px" onclick="event.stopPropagation();openEditModal('${h.ticker}')" title="Edit stock">✎</button>
+          <span style="color:var(--border);font-size:14px;cursor:grab;padding:0 2px">⠿</span>
+        </div>
       </div>`;
     }).join('');
 
@@ -2627,47 +2637,60 @@ async function runStockAnalysis() {
   out.innerHTML = '<div style="padding:32px;text-align:center;color:var(--muted)"><span class="spinner-inline"></span> Fetching data & generating analysis…</div>';
 
   try {
-    // Fetch profile, quote, recommendations, news from Finnhub
-    const [profRes, quoteRes, recRes, newsRes] = await Promise.all([
+    // Fetch profile and recent news only — no financial metrics
+    const [profRes, newsRes] = await Promise.all([
       fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${apiKey}`),
-      fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${apiKey}`),
-      fetch(`https://finnhub.io/api/v1/stock/recommendation?symbol=${ticker}&token=${apiKey}`),
       fetch(`https://finnhub.io/api/v1/company-news?symbol=${ticker}&from=${daysAgo(30)}&to=${daysAgo(0)}&token=${apiKey}`)
     ]);
-    const prof  = await profRes.json();
-    const quote = await quoteRes.json();
-    const recs  = await recRes.json();
-    const news  = await newsRes.json();
+    const prof = await profRes.json();
+    const news = await newsRes.json();
 
     if (!prof.name) { out.innerHTML = `<div class="analysis-placeholder"><div class="big">⚠️</div><p>Ticker not found. Check the symbol and try again.</p></div>`; return; }
 
-    // Build prompt for Claude
-    const latestRec = recs && recs[0] ? recs[0] : null;
     const topNews = (news || []).slice(0, 5).map(n => `• ${n.headline}`).join('\n');
-    const prompt = `You are a financial research analyst. Based on the following data, write a structured company analysis report.
+
+    const prompt = `You are a strategic business analyst. Your job is to help an investor understand a company's business — not its financials. Do not mention stock price, valuation, revenue, earnings, or any financial metrics.
 
 Company: ${prof.name} (${ticker})
 Sector: ${prof.finnhubIndustry || 'N/A'}
-Market Cap: $${prof.marketCapitalization ? (prof.marketCapitalization * 1e6 / 1e9).toFixed(1) + 'B' : 'N/A'}
-Current Price: $${quote.c || 'N/A'}
-52wk High: $${quote.h || 'N/A'} | 52wk Low: $${quote.l || 'N/A'}
-Analyst Consensus (latest): ${latestRec ? `Buy:${latestRec.buy} Hold:${latestRec.hold} Sell:${latestRec.sell} StrongBuy:${latestRec.strongBuy}` : 'N/A'}
-Recent Headlines:
+Country: ${prof.country || 'N/A'}
+Recent Headlines (last 30 days):
 ${topNews || 'No recent news available'}
 
-Write a structured analysis with these exact sections:
-1. Business Overview (2-3 sentences on what the company does)
-2. SWOT Analysis (bullet points for Strengths, Weaknesses, Opportunities, Threats — 2-3 each)
-3. Analyst Sentiment (interpret the recommendation data)
-4. Key Risks (2-3 bullet points)
-5. One-line Verdict
+Write a thorough strategic analysis covering:
 
-Be concise, specific, and data-informed. Format in clean markdown with ## headers.`;
+## What They Do
+3-4 sentences explaining the company's core business, what products or services they offer, who their customers are, and how they make money (business model only — no revenue numbers).
+
+## Product & Service Portfolio
+Bullet points covering their main product lines, services, or business segments. What do they actually sell or provide?
+
+## Competitive Position
+- Who are their top 3-5 direct competitors?
+- What is their competitive advantage (moat)?
+- Where do they lead, and where are they weaker vs competitors?
+
+## Industry Overview
+- What industry/sector are they in and how large is it?
+- What are the key trends shaping this industry?
+- Is this industry growing, mature, or declining?
+- What are the main challenges facing the industry?
+
+## SWOT Analysis
+**Strengths:** 3 bullet points — what does this company do better than others?
+**Weaknesses:** 3 bullet points — where are they vulnerable or behind?
+**Opportunities:** 3 bullet points — what tailwinds or market shifts could benefit them?
+**Threats:** 3 bullet points — what competitive, regulatory, or market forces threaten them?
+
+## Verdict
+One paragraph summary: is this a competitively strong business in a good industry? What should a long-term buy-and-hold investor understand about this company's strategic position?
+
+Knowledge cutoff: August 2025. Use recent headlines above for any post-cutoff context. End with: "⚠️ Strategic analysis as of August 2025 — verify recent developments before investing."`;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': anthropicKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1500, messages: [{ role: 'user', content: prompt }] })
     });
 
     const data = await response.json();
