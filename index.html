@@ -1321,6 +1321,7 @@ async function fetchPrice(holding) {
     const profile = await profileRes.json();
     if (quote.c && quote.c > 0) { holding.currentPrice = quote.c; holding.changePercent = quote.dp ?? null; }
     if (profile.name) holding.companyName = profile.name;
+    if (profile.finnhubIndustry) holding.sector = profile.finnhubIndustry;
   } catch(e) {}
 }
 
@@ -2004,6 +2005,7 @@ async function fetchWatchPrice(item) {
 
     if (q.c && q.c > 0) { item.currentPrice = q.c; item.changePercent = q.dp ?? null; }
     if (p.name) item.companyName = p.name;
+    if (p.finnhubIndustry) item.sector = p.finnhubIndustry;
     if (p.marketCapitalization) item.marketCap = p.marketCapitalization * 1e6; // stored in millions
 
     const m = f.metric || {};
@@ -3452,8 +3454,8 @@ function dismissIncomingShare() {
 function generateShareLink() {
   // Only share ticker + status — no prices, no groups, no personal data
   const stocks = [
-    ...holdings.map(h => ({ ticker: h.ticker, status: 'held' })),
-    ...watchlist.map(w => ({ ticker: w.ticker, status: 'watching' }))
+    ...holdings.map(h => ({ ticker: h.ticker, status: 'held', sector: h.finnhubIndustry || h.sector || null })),
+    ...watchlist.map(w => ({ ticker: w.ticker, status: 'watching', sector: w.finnhubIndustry || w.sector || null }))
   ];
 
   const data = {
@@ -3549,6 +3551,7 @@ async function enrichAndRenderSharedViewer(data) {
       return {
         ...s,
         name:          prof.name || s.ticker,
+        sector:        s.sector || prof.finnhubIndustry || null,
         price:         quote.c || null,
         changePercent: quote.dp ?? null,
         marketCap:     prof.marketCapitalization ? prof.marketCapitalization * 1e6 : null,
@@ -3623,6 +3626,7 @@ function updateCommunityUI() {
 }
 
 let sharedViewFilter = 'all';
+let sharedViewMode   = 'list';
 let currentViewingData = null;
 
 function filterSharedView(f) {
@@ -3634,9 +3638,19 @@ function filterSharedView(f) {
   if (currentViewingData) renderSharedViewerBody(currentViewingData);
 }
 
+function setSharedViewMode(m) {
+  sharedViewMode = m;
+  ['list','sector'].forEach(v => {
+    const btn = document.getElementById('svm-' + v);
+    if (btn) btn.classList.toggle('active', v === m);
+  });
+  if (currentViewingData) renderSharedViewerBody(currentViewingData);
+}
+
 function renderSharedViewer(data) {
   currentViewingData = data;
   sharedViewFilter   = 'all';
+  sharedViewMode     = 'list';
   document.getElementById('viewer-title').textContent = (data.sharedBy || 'Unknown') + "'s Portfolio";
   document.getElementById('shared-viewer').style.display = '';
 
@@ -3653,11 +3667,17 @@ function renderSharedViewer(data) {
   if (header) {
     const wrap = document.createElement('div');
     wrap.id = 'shared-view-filter-wrap';
-    wrap.className = 'view-toggle';
+    wrap.style.cssText = 'display:flex;align-items:center;gap:8px;flex-wrap:wrap';
     wrap.innerHTML =
-      '<button class="active" id="svf-all"      onclick="filterSharedView(&quot;all&quot;)">All (' + stocks.length + ')</button>' +
-      '<button                id="svf-held"     onclick="filterSharedView(&quot;held&quot;)">&#x25CF; Held (' + heldN + ')</button>' +
-      '<button                id="svf-watching" onclick="filterSharedView(&quot;watching&quot;)">&#x25CF; Watching (' + watchN + ')</button>';
+      '<div class="view-toggle">' +
+        '<button class="active" id="svf-all"      onclick="filterSharedView(&quot;all&quot;)">All (' + stocks.length + ')</button>' +
+        '<button                id="svf-held"     onclick="filterSharedView(&quot;held&quot;)">&#x25CF; Held (' + heldN + ')</button>' +
+        '<button                id="svf-watching" onclick="filterSharedView(&quot;watching&quot;)">&#x25CF; Watching (' + watchN + ')</button>' +
+      '</div>' +
+      '<div class="view-toggle">' +
+        '<button class="active" id="svm-list"   onclick="setSharedViewMode(&quot;list&quot;)">≡ List</button>' +
+        '<button                id="svm-sector" onclick="setSharedViewMode(&quot;sector&quot;)">⊞ By Sector</button>' +
+      '</div>';
     header.appendChild(wrap);
   }
 
@@ -3683,7 +3703,18 @@ function renderSharedViewerBody(data) {
   const thc = th + ';text-align:center';
   const td  = 'padding:9px 10px;font-size:11px;';
 
-  const rows = filtered.map(s => {
+  const thead = '<thead><tr>' +
+    '<th style="' + th  + '">Ticker</th>' +
+    '<th style="' + th  + '">Company</th>' +
+    '<th style="' + thr + '">Price</th>' +
+    '<th style="' + thr + '">Today</th>' +
+    '<th style="' + thr + '">Mkt Cap</th>' +
+    '<th style="' + thr + '">P/E</th>' +
+    '<th style="' + thr + '">52wk Range</th>' +
+    '<th style="' + thc + '">Status</th>' +
+  '</tr></thead>';
+
+  const makeRow = s => {
     const isHeld   = s.status === 'held';
     const color    = isHeld ? 'var(--green)' : 'var(--accent)';
     const label    = isHeld ? 'Held' : 'Watching';
@@ -3695,8 +3726,6 @@ function renderSharedViewerBody(data) {
       : '—';
     const capStr = s.marketCap ? fmtCap(s.marketCap) : '—';
     const peStr  = s.pe ? s.pe.toFixed(1) : '—';
-
-    // Visual 52wk bar matching dashboard style
     const rangeHtml = (() => {
       const price = s.price || 0;
       if (!s.week52High || !s.week52Low || !price) return '<span style="color:var(--muted)">—</span>';
@@ -3708,10 +3737,8 @@ function renderSharedViewerBody(data) {
         '<div class="bar-track" style="width:52px;display:inline-block;vertical-align:middle;margin:0 4px">' +
           '<div class="bar-fill" style="width:' + pos.toFixed(0) + '%;background:' + barColor + '"></div>' +
         '</div>' +
-        fmt(s.week52High) +
-      '</div>';
+        fmt(s.week52High) + '</div>';
     })();
-
     return '<tr style="border-bottom:1px solid var(--border);cursor:pointer" onclick="openStockOverlay(\'' + s.ticker + '\')">' +
       '<td style="' + td + '"><span class="ticker-badge" style="font-size:11px;padding:2px 6px">' + s.ticker + '</span></td>' +
       '<td style="' + td + 'color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (s.name || '—') + '</td>' +
@@ -3723,19 +3750,33 @@ function renderSharedViewerBody(data) {
       '<td style="' + td + 'text-align:center"><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:' + color + '">' +
         '<span style="width:7px;height:7px;border-radius:50%;background:' + color + ';flex-shrink:0"></span>' + label +
       '</span></td></tr>';
-  }).join('');
+  };
 
-  body.innerHTML = '<div class="table-wrap"><table style="width:100%;border-collapse:collapse">' +
-    '<thead><tr>' +
-      '<th style="' + th  + '">Ticker</th>' +
-      '<th style="' + th  + '">Company</th>' +
-      '<th style="' + thr + '">Price</th>' +
-      '<th style="' + thr + '">Today</th>' +
-      '<th style="' + thr + '">Mkt Cap</th>' +
-      '<th style="' + thr + '">P/E</th>' +
-      '<th style="' + thr + '">52wk Range</th>' +
-      '<th style="' + thc + '">Status</th>' +
-    '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+  if (sharedViewMode === 'list') {
+    body.innerHTML = '<div class="table-wrap"><table style="width:100%;border-collapse:collapse">' +
+      thead + '<tbody>' + filtered.map(makeRow).join('') + '</tbody></table></div>';
+    return;
+  }
+
+  // ── By Sector view ──
+  const bySector = {};
+  filtered.forEach(s => {
+    const cat = s.sector || 'Unknown';
+    if (!bySector[cat]) bySector[cat] = [];
+    bySector[cat].push(s);
+  });
+
+  body.innerHTML = Object.keys(bySector).sort().map(cat => {
+    const items = bySector[cat];
+    return '<div style="margin-bottom:20px">' +
+      '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);padding:8px 0 6px;display:flex;align-items:center;gap:6px">' +
+        '<span style="width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block;flex-shrink:0"></span>' +
+        cat + '<span style="font-weight:400;margin-left:4px">(' + items.length + ')</span>' +
+      '</div>' +
+      '<div class="table-wrap"><table style="width:100%;border-collapse:collapse">' +
+        thead + '<tbody>' + items.map(makeRow).join('') + '</tbody></table></div>' +
+    '</div>';
+  }).join('');
 }
 
 </script>
