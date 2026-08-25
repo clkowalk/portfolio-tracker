@@ -2768,19 +2768,21 @@ Knowledge cutoff: August 2025. Use recent headlines above for any post-cutoff co
     });
 
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error?.message || 'API error');
-    const markdown = data.content[0].text;
+    if (!response.ok) throw new Error(data.error?.message || 'API error ' + response.status);
+    const markdown = data.content?.[0]?.text;
+    if (!markdown) throw new Error('No response text received from API');
 
     // Save analysis
-    const analysis = { ticker, name: prof.name, date: new Date().toISOString(), markdown, price: quote.c, marketCap: prof.marketCapitalization };
-    savedAnalyses = savedAnalyses.filter(a => a.ticker !== ticker); // replace if exists
+    const analysis = { ticker, name: prof.name, date: new Date().toISOString(), markdown, marketCap: prof.marketCapitalization };
+    savedAnalyses = savedAnalyses.filter(a => a.ticker !== ticker);
     savedAnalyses.unshift(analysis);
     saveResearchData();
 
     renderAnalysis(analysis);
     renderSavedAnalyses();
   } catch(e) {
-    out.innerHTML = `<div class="analysis-placeholder"><div class="big">⚠️</div><p>Error: ${e.message}</p></div>`;
+    console.error('Stock analysis error:', e);
+    out.innerHTML = `<div class="analysis-placeholder"><div class="big">⚠️</div><p><strong>Error:</strong> ${e.message}</p><p style="font-size:11px;color:var(--muted);margin-top:8px">Check your Anthropic API key in ⚙ Settings and try again.</p></div>`;
   }
 }
 
